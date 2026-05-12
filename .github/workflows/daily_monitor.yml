@@ -1,0 +1,48 @@
+name: Daily Water Monitor
+
+on:
+  schedule:
+    - cron: '0 23 * * *'   # UTC 23:00 = 台灣 07:00
+  workflow_dispatch:         # 允許手動觸發測試
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Collect news
+        env:
+          GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
+          GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
+        run: python scripts/collect_news.py
+
+      - name: Analyze sentiment
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/analyze.py
+
+      - name: Build dashboard
+        run: python scripts/build_dashboard.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ docs/
+          git diff --staged --quiet || git commit -m "Daily update $(date +'%Y-%m-%d %H:%M') UTC"
+          git push
