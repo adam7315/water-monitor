@@ -117,8 +117,10 @@
         <div class="space-y-2.5">
           <div>
             <label class="text-xs text-slate-400 block mb-1">日期</label>
-            <input type="date" id="filterDate"
+            <select id="filterDate"
               class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <option value="ALL">📋 全部（近30天）</option>
+            </select>
           </div>
           <div>
             <label class="text-xs text-slate-400 block mb-1">分類</label>
@@ -251,22 +253,58 @@ let trendChartObj = null;
 
 /* ── 初始化 ── */
 function init() {
-  document.getElementById('filterDate').value    = TODAY;
   document.getElementById('totalAllCount').textContent = (TOTAL_ALL||0).toLocaleString();
   document.getElementById('totalNegCount').textContent = (TOTAL_NEG_ALL||0).toLocaleString();
+
+  // 填入日期選單（所有有資料的日期，最新在前）
+  const sel = document.getElementById('filterDate');
+  const availDates = Object.keys(MONITOR_DATA).sort().reverse();
+  availDates.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    sel.appendChild(opt);
+  });
+  // 預設：最新有資料的日期
+  const defaultDate = availDates.length > 0 ? availDates[0] : 'ALL';
+  sel.value = defaultDate;
 
   renderTrendChart();
   renderSpotlight();
   renderTopicHeat();
-  renderDay(TODAY);
+  renderDay(defaultDate);
 
-  document.getElementById('filterDate').addEventListener('change', e => renderDay(e.target.value));
+  sel.addEventListener('change', e => renderDay(e.target.value));
   ['filterCat','filterSent','filterPlatform'].forEach(id =>
     document.getElementById(id).addEventListener('change', applyFilters));
 }
 
-/* ── 載入某天 ── */
+/* ── 載入某天或全部 ── */
 function renderDay(day) {
+  if (day === 'ALL') {
+    // 全部模式：合併所有日期的 items
+    currentItems = [];
+    let totPos=0, totNeg=0, totNeu=0, totHigh=0;
+    Object.values(MONITOR_DATA).forEach(d => {
+      currentItems = currentItems.concat(d.items || []);
+      const s = d.stats || {};
+      totPos  += s.positive||0; totNeg += s.negative||0;
+      totNeu  += s.neutral||0;  totHigh+= s.high_priority||0;
+    });
+    document.getElementById('lastUpdate').textContent = '顯示全部近30天資料';
+    updateStats({total:currentItems.length, positive:totPos, negative:totNeg, neutral:totNeu, high_priority:totHigh});
+    const high = currentItems.filter(x => x.priority==='高' && x.sentiment==='負面');
+    if (high.length) {
+      document.getElementById('alertBar').classList.remove('hidden');
+      document.getElementById('alertText').textContent =
+        '近30天共 ' + totNeg + ' 則負面，其中 ' + high.length + ' 則高優先';
+      renderUrgent(high.slice(0,3));
+      document.getElementById('urgentCount').textContent = '共 '+high.length+' 則';
+      document.getElementById('urgentSection').classList.remove('hidden');
+    } else { hideUrgent(); document.getElementById('alertBar').classList.add('hidden'); }
+    applyFilters();
+    return;
+  }
+
   const dayData = MONITOR_DATA[day];
   if (!dayData) {
     document.getElementById('lastUpdate').textContent = day + ' 無資料';
@@ -372,7 +410,10 @@ function quickSearch(kw) { document.getElementById('searchBox').value = kw; appl
 function resetFilters() {
   ['filterCat','filterSent','filterPlatform'].forEach(id => document.getElementById(id).value='');
   document.getElementById('searchBox').value='';
-  applyFilters();
+  const sel = document.getElementById('filterDate');
+  const dates = Object.keys(MONITOR_DATA).sort().reverse();
+  if (dates.length) { sel.value = dates[0]; renderDay(dates[0]); }
+  else applyFilters();
 }
 
 /* ── 新聞列表 ── */
