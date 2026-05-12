@@ -7,250 +7,450 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  .card-negative { border-left: 4px solid #ef4444; }
-  .card-positive { border-left: 4px solid #22c55e; }
-  .card-neutral  { border-left: 4px solid #94a3b8; }
-  .badge-high    { background:#fee2e2; color:#dc2626; }
-  .badge-mid     { background:#fef3c7; color:#d97706; }
-  .badge-low     { background:#f1f5f9; color:#64748b; }
-  .badge-positive{ background:#dcfce7; color:#16a34a; }
-  .badge-negative{ background:#fee2e2; color:#dc2626; }
-  .badge-neutral { background:#f1f5f9; color:#64748b; }
-  .clarify-box   { background:#fffbeb; border:1px solid #fcd34d; border-radius:6px; padding:12px; margin-top:8px; }
-  .copy-btn      { cursor:pointer; }
-  @media (max-width:640px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+  body { font-family: -apple-system, "Noto Sans TC", sans-serif; }
+  .card-neg { border-left: 4px solid #ef4444; }
+  .card-pos { border-left: 4px solid #22c55e; }
+  .card-neu { border-left: 4px solid #94a3b8; }
+  .ai-badge { background: linear-gradient(135deg,#667eea,#764ba2); }
+  .pulse { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+  .bar-fill { transition: width .9s cubic-bezier(.4,0,.2,1); }
+  .news-card { transition: box-shadow .18s; }
+  .news-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.10); }
+  .line-box { background: linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #86efac; }
+  @media(max-width:1023px){ .sidebar{ display:none !important; } }
+  @media(max-width:1023px){ .layout-grid{ grid-template-columns:1fr !important; } }
 </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-slate-50 min-h-screen">
 
-<!-- Header -->
-<div class="bg-blue-800 text-white py-4 px-4 shadow">
-  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-    <div>
-      <h1 class="text-xl font-bold">💧 南水資源分署 輿情監控</h1>
-      <p class="text-blue-200 text-sm mt-1" id="lastUpdate">載入中...</p>
+<!-- ── Header ── -->
+<header style="background:linear-gradient(135deg,#1a3a5c 0%,#1e5799 100%)" class="text-white shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 py-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="text-4xl">💧</div>
+        <div>
+          <div class="text-xs text-blue-200 mb-0.5 tracking-wide">114–115年度 臺南海水淡化廠暨南區水資源推廣計畫</div>
+          <h1 class="text-xl font-bold tracking-tight">輿情監控系統</h1>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="ai-badge text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow">
+          <span class="pulse w-2 h-2 bg-white rounded-full inline-block"></span>
+          <span>🤖 AI 每日自動更新</span>
+        </div>
+        <div class="text-right">
+          <div class="text-3xl font-bold" id="headerNegCount">-</div>
+          <div class="text-blue-200 text-xs">今日負面</div>
+        </div>
+      </div>
     </div>
-    <div class="text-right">
-      <div class="text-2xl font-bold" id="headerNegCount">-</div>
-      <div class="text-blue-200 text-xs">今日負面需處理</div>
+    <div class="mt-2 text-blue-200 text-xs flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span>🕐 每日 07:00 自動蒐集分析</span>
+      <span class="opacity-50">|</span>
+      <span id="lastUpdate">載入中...</span>
+      <span class="opacity-50">|</span>
+      <span>累計 <strong class="text-white" id="totalAllCount">-</strong> 則</span>
     </div>
+  </div>
+</header>
+
+<!-- ── Alert Bar ── -->
+<div id="alertBar" class="hidden bg-red-600 text-white px-4 py-3 shadow">
+  <div class="max-w-7xl mx-auto flex items-start gap-2">
+    <span class="text-lg mt-0.5 shrink-0">🚨</span>
+    <span id="alertText" class="font-medium text-sm leading-relaxed"></span>
   </div>
 </div>
 
-<!-- Alert Bar -->
-<div id="alertBar" class="hidden bg-red-600 text-white px-4 py-3">
-  <div class="max-w-6xl mx-auto flex items-center gap-2">
-    <span class="text-lg">🚨</span>
-    <span id="alertText" class="font-medium text-sm"></span>
-  </div>
-</div>
-
-<!-- Stats -->
-<div class="max-w-6xl mx-auto px-4 py-4">
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 stat-grid">
-    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
-      <div class="text-3xl font-bold text-gray-700" id="statTotal">-</div>
-      <div class="text-gray-400 text-xs mt-1">今日蒐集</div>
+<!-- ── Stats Row ── -->
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-2">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-slate-100 text-center">
+      <div class="text-3xl font-bold text-slate-700" id="statTotal">-</div>
+      <div class="text-slate-400 text-xs mt-1">今日蒐集</div>
     </div>
-    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-red-100 text-center">
       <div class="text-3xl font-bold text-red-500" id="statNeg">-</div>
-      <div class="text-gray-400 text-xs mt-1">負面</div>
+      <div class="text-slate-400 text-xs mt-1">負面</div>
     </div>
-    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-green-100 text-center">
       <div class="text-3xl font-bold text-green-500" id="statPos">-</div>
-      <div class="text-gray-400 text-xs mt-1">正面</div>
+      <div class="text-slate-400 text-xs mt-1">正面</div>
     </div>
-    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+    <div class="bg-white rounded-xl p-4 shadow-sm border border-orange-100 text-center">
       <div class="text-3xl font-bold text-orange-500" id="statHigh">-</div>
-      <div class="text-gray-400 text-xs mt-1">高優先待處理</div>
+      <div class="text-slate-400 text-xs mt-1">高優先待處理</div>
     </div>
   </div>
 </div>
 
-<!-- Filters -->
-<div class="max-w-6xl mx-auto px-4 pb-3">
-  <div class="bg-white rounded-lg p-4 shadow-sm flex flex-wrap gap-3 items-center">
-    <div>
-      <label class="text-xs text-gray-500 block mb-1">日期</label>
-      <input type="date" id="filterDate" class="border rounded px-2 py-1 text-sm">
-    </div>
-    <div>
-      <label class="text-xs text-gray-500 block mb-1">分類</label>
-      <select id="filterCat" class="border rounded px-2 py-1 text-sm">
-        <option value="">全部分類</option>
-        <option value="海淡廠">海淡廠</option>
-        <option value="南部水資源">南部水資源</option>
-        <option value="全台水資源">全台水資源</option>
-        <option value="社群輿情">社群輿情</option>
-        <option value="國際">國際</option>
-      </select>
-    </div>
-    <div>
-      <label class="text-xs text-gray-500 block mb-1">情感</label>
-      <select id="filterSent" class="border rounded px-2 py-1 text-sm">
-        <option value="">全部</option>
-        <option value="負面">負面</option>
-        <option value="正面">正面</option>
-        <option value="中立">中立</option>
-      </select>
-    </div>
-    <div>
-      <label class="text-xs text-gray-500 block mb-1">平台</label>
-      <select id="filterPlatform" class="border rounded px-2 py-1 text-sm">
-        <option value="">全部平台</option>
-        <option value="FB">Facebook</option>
-        <option value="Instagram">Instagram</option>
-        <option value="PTT">PTT</option>
-        <option value="Dcard">Dcard</option>
-        <option value="新聞">新聞媒體</option>
-      </select>
-    </div>
-    <div class="ml-auto">
-      <button onclick="resetFilters()" class="text-xs text-blue-500 hover:underline">重置篩選</button>
-    </div>
+<!-- ── Main Layout ── -->
+<div class="max-w-7xl mx-auto px-4 py-3 pb-10">
+  <div class="layout-grid" style="display:grid;grid-template-columns:272px 1fr;gap:16px;align-items:start">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar space-y-4">
+
+      <!-- Filters -->
+      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+        <h3 class="font-semibold text-slate-600 text-sm mb-3">🔍 篩選條件</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">日期</label>
+            <input type="date" id="filterDate"
+              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">分類</label>
+            <select id="filterCat"
+              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <option value="">全部分類</option>
+              <option value="海淡廠">海淡廠</option>
+              <option value="南部水資源">南部水資源</option>
+              <option value="全台水資源">全台水資源</option>
+              <option value="社群輿情">社群輿情</option>
+              <option value="國際">國際</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">情感傾向</label>
+            <select id="filterSent"
+              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <option value="">全部</option>
+              <option value="負面">負面</option>
+              <option value="正面">正面</option>
+              <option value="中立">中立</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">平台</label>
+            <select id="filterPlatform"
+              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <option value="">全部平台</option>
+              <option value="新聞">新聞媒體</option>
+              <option value="PTT">PTT</option>
+              <option value="FB">Facebook</option>
+              <option value="Dcard">Dcard</option>
+            </select>
+          </div>
+          <button onclick="resetFilters()"
+            class="w-full text-xs text-blue-500 hover:text-blue-700 border border-blue-200 rounded-lg py-1.5 hover:bg-blue-50 transition">
+            重置篩選
+          </button>
+        </div>
+      </div>
+
+      <!-- Topic Stats -->
+      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+        <h3 class="font-semibold text-slate-600 text-sm mb-3">🗂 議題分類統計</h3>
+        <div id="topicStats" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Keyword Ranking -->
+      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+        <h3 class="font-semibold text-slate-600 text-sm mb-3">🔥 關鍵字熱度排行</h3>
+        <div id="kwRanking" class="space-y-1.5"></div>
+      </div>
+
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="space-y-4">
+
+      <!-- Trend Chart -->
+      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-semibold text-slate-600 text-sm">📈 近期輿情趨勢</h3>
+          <span class="text-xs text-slate-400">近 14 天</span>
+        </div>
+        <div style="height:160px">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Search + Quick tags -->
+      <div class="bg-white rounded-xl shadow-sm p-3 border border-slate-100">
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-xs text-slate-400 shrink-0">快速搜尋：</span>
+          <button onclick="quickSearch('海淡廠')" class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition">海淡廠</button>
+          <button onclick="quickSearch('曾文水庫')" class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition">曾文水庫</button>
+          <button onclick="quickSearch('缺水')" class="text-xs px-3 py-1 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition">缺水</button>
+          <button onclick="quickSearch('海水淡化')" class="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition">海水淡化</button>
+          <button onclick="quickSearch('節水')" class="text-xs px-3 py-1 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition">節水</button>
+          <input type="text" id="searchBox" placeholder="搜尋關鍵字…"
+            oninput="applyFilters()"
+            class="ml-auto border border-slate-200 rounded-lg px-3 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-blue-300">
+        </div>
+      </div>
+
+      <!-- Count bar -->
+      <div class="flex justify-between items-center px-1 text-sm">
+        <div class="text-slate-500">
+          顯示 <strong id="showCount">0</strong> 則
+          <span class="mx-2 text-red-400">負面 <strong id="showNeg">0</strong></span>
+          <span class="text-green-500">正面 <strong id="showPos">0</strong></span>
+          <span class="ml-2 text-slate-400">中立 <strong id="showNeu">0</strong></span>
+        </div>
+        <span class="text-xs text-slate-300">🤖 Gemini AI 自動分析</span>
+      </div>
+
+      <!-- News List -->
+      <div id="newsList" class="space-y-3"></div>
+      <div id="emptyState" class="hidden text-center py-12 text-slate-400">
+        <div class="text-5xl mb-3">🔍</div>
+        <div class="text-sm">目前無符合條件的資料</div>
+      </div>
+
+    </main>
   </div>
 </div>
 
-<!-- News List -->
-<div class="max-w-6xl mx-auto px-4 pb-8">
-  <div id="newsList" class="space-y-3"></div>
-  <div id="emptyState" class="hidden text-center py-12 text-gray-400">
-    <div class="text-4xl mb-2">🔍</div>
-    <div>目前無符合條件的資料</div>
+<!-- Footer -->
+<footer class="border-t border-slate-200 bg-white py-4 mt-2">
+  <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 space-x-2">
+    <span>114-115年度 臺南海水淡化廠暨南區水資源推廣計畫</span>
+    <span>·</span>
+    <span>每日 07:00（台灣時間）自動蒐集分析</span>
+    <span>·</span>
+    <span>Powered by Google Gemini AI &amp; GitHub Actions</span>
   </div>
-</div>
+</footer>
 
 <script src="data.js"></script>
 <script>
 let currentItems = [];
+let trendChartObj = null;
 
+/* ── 初始化 ── */
 function init() {
-  const today = TODAY;
-  document.getElementById('filterDate').value = today;
-  renderDay(today);
+  document.getElementById('filterDate').value = TODAY;
+  document.getElementById('totalAllCount').textContent = (TOTAL_ALL||0).toLocaleString();
+
+  renderTopicStats();
+  renderKwRanking();
+  renderTrendChart();
+  renderDay(TODAY);
 
   document.getElementById('filterDate').addEventListener('change', e => renderDay(e.target.value));
-  document.getElementById('filterCat').addEventListener('change', applyFilters);
-  document.getElementById('filterSent').addEventListener('change', applyFilters);
-  document.getElementById('filterPlatform').addEventListener('change', applyFilters);
+  ['filterCat','filterSent','filterPlatform'].forEach(id =>
+    document.getElementById(id).addEventListener('change', applyFilters)
+  );
 }
 
+/* ── 載入某天資料 ── */
 function renderDay(day) {
   const dayData = MONITOR_DATA[day];
   if (!dayData) {
-    document.getElementById('lastUpdate').textContent = `${day} 無資料`;
-    updateStats({total:0, positive:0, negative:0, neutral:0, high_priority:0});
+    document.getElementById('lastUpdate').textContent = day + ' 無資料';
+    updateStats({});
     currentItems = [];
     applyFilters();
     return;
   }
   const s = dayData.stats || {};
-  document.getElementById('lastUpdate').textContent = `${day} 更新`;
+  document.getElementById('lastUpdate').textContent = '最後更新：' + day;
   updateStats(s);
   currentItems = dayData.items || [];
 
   const high = currentItems.filter(x => x.priority === '高');
-  if (high.length > 0) {
-    document.getElementById('alertBar').classList.remove('hidden');
+  const bar  = document.getElementById('alertBar');
+  if (high.length) {
+    bar.classList.remove('hidden');
     document.getElementById('alertText').textContent =
-      `⚠ 今日有 ${high.length} 則高優先負面輿情需立即處理：${high.slice(0,2).map(x=>x.title).join('、')}`;
+      '今日有 ' + high.length + ' 則高優先負面輿情需立即處理：' +
+      high.slice(0,2).map(x => x.title).join('、');
   } else {
-    document.getElementById('alertBar').classList.add('hidden');
+    bar.classList.add('hidden');
   }
-
   applyFilters();
 }
 
 function updateStats(s) {
   document.getElementById('statTotal').textContent = s.total || 0;
-  document.getElementById('statNeg').textContent = s.negative || 0;
-  document.getElementById('statPos').textContent = s.positive || 0;
-  document.getElementById('statHigh').textContent = s.high_priority || 0;
+  document.getElementById('statNeg').textContent   = s.negative || 0;
+  document.getElementById('statPos').textContent   = s.positive || 0;
+  document.getElementById('statHigh').textContent  = s.high_priority || 0;
   document.getElementById('headerNegCount').textContent = s.negative || 0;
 }
 
+/* ── 篩選 ── */
 function applyFilters() {
   const cat      = document.getElementById('filterCat').value;
   const sent     = document.getElementById('filterSent').value;
   const platform = document.getElementById('filterPlatform').value;
+  const kw       = document.getElementById('searchBox').value.toLowerCase();
 
-  let filtered = [...currentItems];
-  if (cat)      filtered = filtered.filter(x => x.category === cat);
-  if (sent)     filtered = filtered.filter(x => x.sentiment === sent);
-  if (platform) filtered = filtered.filter(x => x.platform === platform);
+  let f = [...currentItems];
+  if (cat)      f = f.filter(x => x.category  === cat);
+  if (sent)     f = f.filter(x => x.sentiment === sent);
+  if (platform) f = f.filter(x => x.platform  === platform);
+  if (kw)       f = f.filter(x =>
+    (x.title||'').toLowerCase().includes(kw) ||
+    (x.summary||'').toLowerCase().includes(kw) ||
+    (x.keyword||'').toLowerCase().includes(kw)
+  );
 
-  renderList(filtered);
+  document.getElementById('showCount').textContent = f.length;
+  document.getElementById('showNeg').textContent   = f.filter(x=>x.sentiment==='負面').length;
+  document.getElementById('showPos').textContent   = f.filter(x=>x.sentiment==='正面').length;
+  document.getElementById('showNeu').textContent   = f.filter(x=>x.sentiment==='中立').length;
+  renderList(f);
 }
 
-function resetFilters() {
-  document.getElementById('filterCat').value = '';
-  document.getElementById('filterSent').value = '';
-  document.getElementById('filterPlatform').value = '';
+function quickSearch(kw) {
+  document.getElementById('searchBox').value = kw;
   applyFilters();
 }
 
+function resetFilters() {
+  ['filterCat','filterSent','filterPlatform'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('searchBox').value = '';
+  applyFilters();
+}
+
+/* ── 新聞卡片 ── */
 function renderList(items) {
   const container = document.getElementById('newsList');
   const empty     = document.getElementById('emptyState');
-
-  if (!items.length) {
-    container.innerHTML = '';
-    empty.classList.remove('hidden');
-    return;
-  }
+  if (!items.length) { container.innerHTML=''; empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
 
   container.innerHTML = items.map((item, idx) => {
-    const sentClass  = item.sentiment === '負面' ? 'card-negative' :
-                       item.sentiment === '正面' ? 'card-positive' : 'card-neutral';
-    const sentBadge  = item.sentiment === '負面' ? 'badge-negative' :
-                       item.sentiment === '正面' ? 'badge-positive' : 'badge-neutral';
-    const priClass   = item.priority === '高' ? 'badge-high' :
-                       item.priority === '中' ? 'badge-mid' : 'badge-low';
-    const priLabel   = item.priority === '高' ? '🚨 高優先' :
-                       item.priority === '中' ? '⚠ 中' : '低';
+    const neg = item.sentiment === '負面';
+    const pos = item.sentiment === '正面';
+    const borderCls = neg ? 'card-neg' : pos ? 'card-pos' : 'card-neu';
+    const bgCls     = item.priority === '高' ? 'bg-red-50' : 'bg-white';
+    const sentCls   = neg ? 'bg-red-100 text-red-700' : pos ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500';
+    const priCls    = item.priority==='高' ? 'bg-red-100 text-red-700' : item.priority==='中' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400';
+    const priLabel  = item.priority==='高' ? '🚨 高優先' : item.priority==='中' ? '⚠ 中' : '低';
 
-    const clarify = item.sentiment === '負面' && item.line_message ? `
-      <div class="clarify-box mt-3">
+    const clarify = neg && item.line_message ? `
+      <div class="line-box rounded-xl p-3 mt-3">
         <div class="flex justify-between items-center mb-2">
-          <span class="text-xs font-semibold text-yellow-700">📋 建議澄清文字（可直接複製傳 LINE）</span>
-          <button onclick="copyText('clarify-${idx}')"
-            class="copy-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded">
-            複製
-          </button>
+          <span class="text-xs font-semibold text-green-700">📱 AI 即時澄清建議（一鍵複製傳 LINE）</span>
+          <button onclick="copyText('cl-${idx}',this)"
+            class="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full font-medium transition">複製</button>
         </div>
-        <p id="clarify-${idx}" class="text-sm text-gray-700 leading-relaxed">${item.line_message}</p>
-      </div>
-    ` : '';
-
-    const highBg = item.priority === '高' ? 'bg-red-50' : 'bg-white';
+        <p id="cl-${idx}" class="text-sm text-slate-700 leading-relaxed">${item.line_message}</p>
+      </div>` : '';
 
     return `
-    <div class="rounded-lg shadow-sm p-4 ${highBg} ${sentClass}">
-      <div class="flex flex-wrap gap-2 mb-2 items-center">
-        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sentBadge}">${item.sentiment}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${priClass}">${priLabel}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">${item.category}</span>
-        <span class="text-xs text-gray-400">${item.platform || ''}</span>
-        <span class="text-xs text-gray-400 ml-auto">${item.source || ''}</span>
+    <div class="news-card rounded-xl shadow-sm p-4 border border-slate-100 ${bgCls} ${borderCls}">
+      <div class="flex flex-wrap gap-1.5 mb-2 items-center">
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sentCls}">${item.sentiment||'中立'}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${priCls}">${priLabel}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">${item.category||''}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-500">${item.platform||''}</span>
+        <span class="text-xs text-slate-300 ml-auto">${item.source||''}</span>
       </div>
-      <a href="${item.url}" target="_blank"
-         class="font-semibold text-gray-800 hover:text-blue-600 leading-snug block mb-1">
-        ${item.title}
+      <a href="${item.url||'#'}" target="_blank" rel="noopener"
+         class="font-semibold text-slate-800 hover:text-blue-600 leading-snug block mb-1 text-sm">
+        ${item.title||''}
       </a>
-      <p class="text-sm text-gray-500 leading-relaxed">${item.summary || item.content?.slice(0,100) || ''}</p>
+      <p class="text-xs text-slate-400 leading-relaxed line-clamp-2">${item.summary||item.content?.slice(0,100)||''}</p>
       ${clarify}
-      <div class="mt-2 text-xs text-gray-300">${item.reason || ''} · ${item.published?.slice(0,16) || ''}</div>
+      <div class="mt-2 text-xs text-slate-200">${item.published?.slice(0,16)||''}</div>
     </div>`;
   }).join('');
 }
 
-function copyText(id) {
+/* ── 側欄：議題統計 ── */
+function renderTopicStats() {
+  const el = document.getElementById('topicStats');
+  if (!TOPIC_STATS || !Object.keys(TOPIC_STATS).length) {
+    el.innerHTML = '<p class="text-xs text-slate-300">暫無資料</p>'; return;
+  }
+  const total  = Object.values(TOPIC_STATS).reduce((a,b)=>a+b,0);
+  const sorted = Object.entries(TOPIC_STATS).sort((a,b)=>b[1]-a[1]);
+  const colors = ['#3b82f6','#ef4444','#22c55e','#f59e0b','#8b5cf6','#06b6d4'];
+  el.innerHTML = sorted.map(([cat,cnt],i) => {
+    const pct = total > 0 ? Math.round(cnt/total*100) : 0;
+    return `
+    <div class="cursor-pointer group" onclick="setFilter('filterCat','${cat}')">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-slate-600 group-hover:text-blue-600 transition">${cat}</span>
+        <span class="text-slate-300">${cnt}則</span>
+      </div>
+      <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div class="h-full bar-fill rounded-full" style="width:${pct}%;background:${colors[i%colors.length]}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── 側欄：關鍵字排行 ── */
+function renderKwRanking() {
+  const el = document.getElementById('kwRanking');
+  if (!KEYWORD_RANKING || !KEYWORD_RANKING.length) {
+    el.innerHTML = '<p class="text-xs text-slate-300">暫無資料</p>'; return;
+  }
+  const max    = KEYWORD_RANKING[0][1] || 1;
+  const medals = ['🥇','🥈','🥉'];
+  el.innerHTML = KEYWORD_RANKING.map(([kw,cnt],i) => `
+    <div class="flex items-center gap-2 cursor-pointer hover:bg-slate-50 rounded-lg px-1 py-1 -mx-1 group"
+         onclick="quickSearch('${kw}')">
+      <span class="text-sm w-5 text-center shrink-0">${medals[i]||i+1}</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex justify-between text-xs mb-0.5">
+          <span class="text-slate-700 group-hover:text-blue-600 transition truncate">${kw}</span>
+          <span class="text-slate-300 ml-1 shrink-0">${cnt}</span>
+        </div>
+        <div class="h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full rounded-full bg-blue-400" style="width:${Math.round(cnt/max*100)}%"></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ── 趨勢圖 ── */
+function renderTrendChart() {
+  if (!TREND_DATA || !TREND_DATA.length) return;
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChartObj) trendChartObj.destroy();
+  trendChartObj = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: TREND_DATA.map(d => d.date),
+      datasets: [
+        { label:'負面', data:TREND_DATA.map(d=>d.negative),
+          borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.08)',
+          tension:.4, fill:true, pointRadius:3, borderWidth:2 },
+        { label:'正面', data:TREND_DATA.map(d=>d.positive),
+          borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,.08)',
+          tension:.4, fill:true, pointRadius:3, borderWidth:2 },
+        { label:'中立', data:TREND_DATA.map(d=>d.neutral),
+          borderColor:'#94a3b8', backgroundColor:'rgba(148,163,184,.04)',
+          tension:.4, fill:true, pointRadius:2, borderWidth:1.5 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'top', labels:{ font:{size:11}, boxWidth:12, padding:10 }}},
+      scales:{
+        x:{ grid:{display:false}, ticks:{font:{size:10}} },
+        y:{ beginAtZero:true, grid:{color:'rgba(0,0,0,.04)'}, ticks:{font:{size:10},stepSize:1} }
+      }
+    }
+  });
+}
+
+/* ── 工具 ── */
+function setFilter(id, val) {
+  document.getElementById(id).value = val;
+  applyFilters();
+}
+
+function copyText(id, btn) {
   const el = document.getElementById(id);
   if (!el) return;
   navigator.clipboard.writeText(el.textContent.trim()).then(() => {
-    const btn = el.previousElementSibling?.querySelector('button');
-    if (btn) { btn.textContent = '已複製 ✓'; setTimeout(()=>btn.textContent='複製', 2000); }
+    const orig = btn.textContent;
+    btn.textContent = '已複製 ✓';
+    btn.classList.replace('bg-green-500','bg-slate-400');
+    setTimeout(()=>{ btn.textContent=orig; btn.classList.replace('bg-slate-400','bg-green-500'); }, 2000);
   });
 }
 
