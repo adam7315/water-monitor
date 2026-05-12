@@ -1,0 +1,46 @@
+{
+  "stats": {
+    "total": 2,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 2,
+    "high_priority": 0,
+    "date": "2026-03-01"
+  },
+  "items": [
+    {
+      "id": "862f3460abdf8f56fe4bfdcf8ab1c416",
+      "title": "再生水今起供應石排灣公屋及澳門大學",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE5rcEFVWVNOeXNUbk40dWlRVDZiSDRxSnZsTGRaaHY5VEtLeldDcUhoVTMzd1QzVTVIZlJqa3ZyR2d4aVZXLUs4ZEFQVU1uNFVjc2c?oc=5",
+      "source": "澳門特別行政區政府入口網站",
+      "published": "2026-03-01",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "再生水今起供應石排灣公屋及澳門大學",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-01"
+    },
+    {
+      "id": "7f12fef513c95716c866701b2ed634ce",
+      "title": "再生水今起入石排灣公屋及澳大",
+      "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPaHlpdFI5UDd3Tk9VTzMwdUNOTkZOclFBaHkxTmFVc1R1TzM4bXduU19kWEJxRmJPTDdJUmRBLUt6NkQ0ZUNhV3JtOFhhaG04ek9ndjd4cERreGZCRnUyeEpWelBMcXN3cmg4SHFleThyNUpkTGg2S09MaDBYYm5OLW5DYWVDVVk?oc=5",
+      "source": "澳門廣播電視股份有限公司",
+      "published": "2026-03-01",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "再生水今起入石排灣公屋及澳大",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-01"
+    }
+  ]
+}

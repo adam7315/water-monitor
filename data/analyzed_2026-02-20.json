@@ -1,0 +1,46 @@
+{
+  "stats": {
+    "total": 2,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 2,
+    "high_priority": 0,
+    "date": "2026-02-20"
+  },
+  "items": [
+    {
+      "id": "e4a5d9d59be9a977e49bb2772e78449d",
+      "title": "海淡鹵水資源化成趨勢轉為電力或有價材料前景可期| 產經",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1yd0FuYXkzdmZwU01zS0RnY0dNY1JKdFp5QVhwUEhWRmliODFGNVJCeEd1NzFDV3pkMTYzaE1rdndWc2xmUExEQVAycTY2SnlHd3ZtVTVHZk50dnFjaUE?oc=5",
+      "source": "中央社 CNA",
+      "published": "2026-02-20",
+      "content": "",
+      "keyword": "海淡廠相關報導",
+      "category": "海淡廠",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "海淡鹵水資源化成趨勢轉為電力或有價材料前景可期| 產經",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-20"
+    },
+    {
+      "id": "c36ba07edc0bbd56e111d1ff063f1ac8",
+      "title": "澎湖打造「類死海」冬季溫泉台水海淡廠鹵水扮要角| 產業綜合| 產經",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9lZmZpYkRoOWc2UTJFQkxuNmw3VjdtUktGS3kxTnQwdzNWaUR0V1V6aFVzZzBFR3F2OU5hTkRsVFJPNGtPcUd6bXd5TjExZkNw?oc=5",
+      "source": "聯合新聞網",
+      "published": "2026-02-20",
+      "content": "",
+      "keyword": "海淡廠相關報導",
+      "category": "海淡廠",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "澎湖打造「類死海」冬季溫泉台水海淡廠鹵水扮要角| 產業綜合|",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-20"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "stats": {
+    "total": 2,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 2,
+    "high_priority": 0,
+    "date": "2026-02-17"
+  },
+  "items": [
+    {
+      "id": "7a8983cd6d73d6a5f2cfc14f99f834e8",
+      "title": "鳥嘴潭人工湖供民生用水水資源教育館寓教於樂| 地方",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE54aU9sdzlWYVhBN0RFbEhvMHV1NzVxV2E0ajhhekJHRmhNV3lmR0VlMDdyVlNMZDdocXZpdXBhVTNNc2pGcXBhZHN0VE1sN2lkRVJCbUw5dUgtRkhNWnBj?oc=5",
+      "source": "中央社 CNA",
+      "published": "2026-02-17",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "鳥嘴潭人工湖供民生用水水資源教育館寓教於樂| 地方",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-17"
+    },
+    {
+      "id": "0d61b701ac451843e3825ed8be365392",
+      "title": "問AI耗不耗水？水利署點名台灣與國外差異",
+      "url": "https://news.google.com/rss/articles/CBMiowJBVV95cUxPWWsyenNNOUNRVmlMZ3U4Nk8yeWxLNnkxS0dmSGljYldpRXg5aXNfM1VudVhBRlZhRWJGbzhzSkxoZ1BEMHhPdEZtN0FqQU1xN2J1eFRyZlVKZ3VRbW9WYWRGSV9aZ0lRQjVYc0pXNkZ0SmRSRHRRNGVfaFZYSkd0ajJic2ppbzg5dG44VTlKOU9NQXdmRkxRbGp4VkszT2tMNm1USTJrSTB6WWJwLWRGdjNKMjFPdDE0ZW0zS1VyelFqaVZsc3Fma2p4eGlyZUhSZFQ4SW90bmxMZFdqWXJkeW1tcXgxdkQtVXFWaDkwZGtKNzE0cXhJQkpvcWo2UUZ2MThmSllMU0RMWGMxRk1VQ3kxUElRdFJ2bVl1ZmFNUlROT00?oc=5",
+      "source": "Yahoo新聞",
+      "published": "2026-02-17",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "問AI耗不耗水？水利署點名台灣與國外差異",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-17"
+    }
+  ]
+}

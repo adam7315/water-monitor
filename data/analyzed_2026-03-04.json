@@ -1,0 +1,80 @@
+{
+  "stats": {
+    "total": 4,
+    "positive": 1,
+    "negative": 0,
+    "neutral": 3,
+    "high_priority": 0,
+    "date": "2026-03-04"
+  },
+  "items": [
+    {
+      "id": "36a98e2192908a9d9a4d6169b6d17c66",
+      "title": "枯水期降雨僅同期2成，新竹水庫蓄水率相對低！梅雨前大考驗：洗車「用這招」能省75升水 | 今周刊",
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFB0QlpTMzNaM2xsVG4zVmJUMHhua21tQ1Bld3lrQmN1bUVraFBuN1lySWxHZUgzZURFZEdzcE0wQnFOc3pOWUpVTnBSUTd2VTBxa2xZMFhn?oc=5",
+      "source": "LINE TODAY",
+      "published": "2026-03-04",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "枯水期降雨僅同期2成，新竹水庫蓄水率相對低！梅雨前大考驗：洗",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-04"
+    },
+    {
+      "id": "2812e7cad0b4997f99648100f3889993",
+      "title": "避春耕缺水 農田水利署：優先輪流灌溉 陸續啟用抗旱水井",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9hbDhSN3pTQUYwbmtRbnkyNXQ3NUdyeXg2X2ZiYWZuVUhScW1jVHpJRE1iQTRqTmlRU0NneVhENGpTcmNKU245cl9iMGZMT2xI0gFWQVVfeXFMTnlENGx0RXZ0ejRKMkxlU3NWSk9Zbk1QRXRQQzIyaHpoRVN3XzZaTEZqemlkZWx4YlN3R1JLb1JmRHhnZUY0M2l4TDZFVVB4QlJCYzZXamc?oc=5",
+      "source": "聯合新聞網",
+      "published": "2026-03-04",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "正面",
+      "summary": "避春耕缺水 農田水利署：優先輪流灌溉 陸續啟用抗旱水井",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-04"
+    },
+    {
+      "id": "f7774103b19a24c3c5ef3d2344ac2854",
+      "title": "泰國啟動抗旱3年計畫 EEC強化供水",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5tRThzZ3FRMjRfZ2I5d2pnbTZBbndBbC03T0ZPdUpUSFJTY0pVdFB1TTRZVWlRRlAwcGNKeXJWaXZsT19RY3RTbkhIRFlFZUxKOFpDU2NIbw?oc=5",
+      "source": "rti.org.tw",
+      "published": "2026-03-04",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "泰國啟動抗旱3年計畫 EEC強化供水",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-04"
+    },
+    {
+      "id": "9de7c5cf584f957e40dac9f5ee3dc66a",
+      "title": "春雨挹注重啟越域引水 高雄水情仍須審慎因應",
+      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE5EeDRGYXF2SkZBazZKUUV5Vk1NTTRrT0xaRGhmWGxRWlo3SW9zMmJLQ1MydE1OejJkVVJmcDh6REZwVEhITFdfbHBoYmZBbm5aTUotc1RlMmppUjJRbjNEVHhiQmTSAWpBVV95cUxNcFdmcXIxWVdHRnE3N2xCWmtfTGQ2al9UT2FfMWdqQ3ZETVU5dmdYX04tODBFYWxuY3pnM1NmTHJjQ1ZWRjBnVGpxbndfcTJQSkpEczFSMk5wVXh0SnkxQmxVMndPMG16M1hB?oc=5",
+      "source": "自由時報",
+      "published": "2026-03-04",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "春雨挹注重啟越域引水 高雄水情仍須審慎因應",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-04"
+    }
+  ]
+}

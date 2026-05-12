@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 1,
+    "negative": 0,
+    "neutral": 0,
+    "high_priority": 0,
+    "date": "2026-02-12"
+  },
+  "items": [
+    {
+      "id": "fbd407845be3c5f152a3360688d50b95",
+      "title": "台南運河開通百年 市府加速水質改善",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5ielMxLVNyTGR2VjhSN2pGTWxtRzZhWmNRMnRKZE53dl94eDdyaDVJeWQ3MXJZMjhkZ0VVTnpmcDl2LTRvVnE5TTBOVzVZUXdiam9EYjdHSFJZVnJuLTI1Und3RVhELXBiYnRz0gFwQVVfeXFMTVhwX040c3BPSlpkN29aVmNWcWJIR2VNd0RjdUx6UGNxVmtsaEh5cW9WdUVtdml3WVpKRm5yTE1OZkd6RjFIX3BEQ3QzVlNZdnlaSDR4T2V5QTA0elZPaTljS3NQc3R5NTlnU0FIU2ZkcQ?oc=5",
+      "source": "news.housefun.com.tw",
+      "published": "2026-02-12",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "南部水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "正面",
+      "summary": "台南運河開通百年 市府加速水質改善",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-12"
+    }
+  ]
+}

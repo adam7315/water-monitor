@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-03-07"
+  },
+  "items": [
+    {
+      "id": "04814df891e7b69e53a6e1a887d1a0a6",
+      "title": "農水署高雄管理處成立旱災緊急應變小組全力抗旱！",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5kQ3gzaEgzd1dXa18yX0dPWTFhZFVHMnJaeERfdzFqdkxmcmRkbXhBTUtta2U4dHVsQXMtOTV4YjJvVTlfWkRtdEgtOGdlTWw0OHh6aUlnRERXaVNzVXphdTUxVmFKbU9mZlNrM1UxalE?oc=5",
+      "source": "大成報",
+      "published": "2026-03-07",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "農水署高雄管理處成立旱災緊急應變小組全力抗旱！",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-07"
+    }
+  ]
+}

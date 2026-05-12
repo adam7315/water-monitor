@@ -1,0 +1,80 @@
+{
+  "stats": {
+    "total": 4,
+    "positive": 0,
+    "negative": 1,
+    "neutral": 3,
+    "high_priority": 0,
+    "date": "2026-04-03"
+  },
+  "items": [
+    {
+      "id": "eda8747d018db9970aaa3cfdaab0571e",
+      "title": "1張圖看4至6月氣候報告 專家：整體雨量比平均值少 節約用水",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE0zbHluOG5vc0pPZkJhZjBYdGt3Qy1GeC15OTBTa05Dc3VKdEV0ZlBMcS15czNHMVJucG13eUpHR0dzdWlHNjJlNy0zY1hqNnow0gFWQVVfeXFMTmlFcno2cnBMSWtKR2dZUG1qY0tZbUZSLU9hbGtMQ2Y0RnA5SGVrUXpYNkVRVkxYS0RfZDB4ZHNfaVY0RVBudWUyVG01X3VNVmhLb2NSQ2c?oc=5",
+      "source": "聯合新聞網",
+      "published": "2026-04-03",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "1張圖看4至6月氣候報告 專家：整體雨量比平均值少 節約用水",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-04-03"
+    },
+    {
+      "id": "8c3ae943b33cf398e4a13c8e49e1761f",
+      "title": "抗旱防洪 台南再增8座滯洪池",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9rLU92Z3hGZGRhMEtMX1B1M25jc3RfY2t6a2dhOXRfYzItU1dGM2JOclZKYXJXZlJUeEtZY2pVeExwLTdtZGwwWXI0MFZaWG5US0x3UTNBLUVjaTBrelR1NlkxeVlEc1J0Zkk0?oc=5",
+      "source": "中時新聞網",
+      "published": "2026-04-03",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "南部水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "抗旱防洪 台南再增8座滯洪池",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-04-03"
+    },
+    {
+      "id": "1b4e9f598d613ed34e11ce05d8188b7f",
+      "title": "桃園北區再生水中心 日供4萬噸",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1FRWZzRnZnUGJ5UUJNSnN1Q203LVBSTDhJRnV1UGVqRE5IYlpnbEdMSHlBZEZrN2pqM2VtYUg1Q2lvN1h5LVpweGY2Wl94OHZwWDU2QXJXQ18zeWYxZVNLNVVjZm1MNEZSVzF3?oc=5",
+      "source": "中時新聞網",
+      "published": "2026-04-03",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "桃園北區再生水中心 日供4萬噸",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-04-03"
+    },
+    {
+      "id": "7317416c27e9f22b7548e5995e0b3d7f",
+      "title": "〈社論〉水資源危機處理，資訊應更公開透明 | 中華日報",
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1JYjhUMHRoSlFNR3VHeDFlc2N6VGhZaEZra2dQTTlWbUlzOHZOdV9SU2RLX0NiRExBRmtTSzdZTVRzcjJRMWxZZHdzUW9fQjlDWUk1a0NB?oc=5",
+      "source": "LINE TODAY",
+      "published": "2026-04-03",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "中",
+      "platform": "新聞",
+      "sentiment": "負面",
+      "summary": "〈社論〉水資源危機處理，資訊應更公開透明 | 中華日報",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-04-03"
+    }
+  ]
+}

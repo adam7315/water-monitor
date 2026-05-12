@@ -1,0 +1,46 @@
+{
+  "stats": {
+    "total": 2,
+    "positive": 0,
+    "negative": 1,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-03-08"
+  },
+  "items": [
+    {
+      "id": "9907ebcf8bec709dd52f4cc92d7798ef",
+      "title": "雨量偏低衝擊灌溉農水署行動抗旱車添助力| 生活",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE54NGVHU21qT2NWZUxkM0dYRUFPZTdqUlNaZVk4RDBLSGFJb2NPYUgxb2E2VUlqTGxFOFoyeDhQZnFNdkxRdG96V1hFUktnV0Z4bGV0Y0VzQzBNQUI0QnpR?oc=5",
+      "source": "中央社 CNA",
+      "published": "2026-03-08",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "中",
+      "platform": "新聞",
+      "sentiment": "負面",
+      "summary": "雨量偏低衝擊灌溉農水署行動抗旱車添助力| 生活",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-08"
+    },
+    {
+      "id": "c6c16c5ac5c19b4e3b4649b5569c3494",
+      "title": "農水署高雄處全力抗旱 啟動美濃抗旱井並成立應變小組 穩定農民灌溉權益",
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE9jVTBjZkdxSWxFQ3F5U0Q5YktBSnFnZVY3azVNd2pqWVUwOGRvSnRfckFqYVVqS3Q2TjVWWU1nOEVsOVdGOFFxWE5vT1FuV0VQQnVJR0xYeXQ2ZkxLUHVJaE9sa2lENlpPcDlkRDhRMGl1Zw?oc=5",
+      "source": "wennan.org.tw",
+      "published": "2026-03-08",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "農水署高雄處全力抗旱 啟動美濃抗旱井並成立應變小組 穩定農民",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-08"
+    }
+  ]
+}

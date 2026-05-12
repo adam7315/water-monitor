@@ -1,0 +1,46 @@
+{
+  "stats": {
+    "total": 2,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 2,
+    "high_priority": 0,
+    "date": "2026-02-19"
+  },
+  "items": [
+    {
+      "id": "50c8ff3c45f0258c26a8d130d4fd9106",
+      "title": "枯水期日月潭水位降九蛙全露 若持續下探將啟動二階應變",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5ERnhhR2hpRWJhTjdfNXdadHMzMmZfOWZfbEJESVRMRE5RZTdBLWl6eEJpclNza2xJelRXY0ctX09lZFJqUTcyaVlFT0g4SGM?oc=5",
+      "source": "公視新聞網PNN",
+      "published": "2026-02-19",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "枯水期日月潭水位降九蛙全露 若持續下探將啟動二階應變",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-19"
+    },
+    {
+      "id": "9cefeda5d94df32c22566b861fa0876f",
+      "title": "【勘誤】枯水期日月潭水位降九蛙全露 若持續下探將啟動二階應變｜20260219 公視晚間新聞",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBPVXpTQ3VSUDNZY3RCZEdzSGVHdzJpbGtlZUVpMDlqNGVjdkI1c1k2RkhrWDlIbTJ0cHpobHlvcE85TDVNTERuSm96dw?oc=5",
+      "source": "公視新聞網PNN",
+      "published": "2026-02-19",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "【勘誤】枯水期日月潭水位降九蛙全露 若持續下探將啟動二階應變",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-19"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "stats": {
+    "total": 4,
+    "positive": 2,
+    "negative": 1,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-03-02"
+  },
+  "items": [
+    {
+      "id": "ed9161eed31db8be59597cf3a89f7faf",
+      "title": "7水庫蓄水率不到50%！ 專家曝「枯水期降雨偏少」：春雨不夠解渴",
+      "url": "https://news.google.com/rss/articles/CBMi7wJBVV95cUxPVVFmUEhMNGVDbGEtSVpDSnNONmtrVUVLclpLeWFKTHVrZHZSOVp3RjBITkJrVXFmWlUtLWFuX191aWdENDhKMjg1cU40YmxUZTJqelpVd0JTdlo0QnhVakJWRjl1Tk9FNS1XM28wYko0SWZ5R09BUktZR3AyMVR4TURMQ0V0dk81a0pkS2JQMzl6VWNFVXRpU1UwQ0xvYjFlS05hUzZaZlhacU42MG5ZU2dia2I1ZWNEd2Y0bllkSDVYY2tFTXg0YXFaWm1RRk5XOWVtdUl0aHFhcWx4V0ljZUhSa19xTlViR0pCMGV5LXBtMVJ1RllIUE8zM3J6MTB4bHd2N1lHUzVQVnh2eU9INUUxd3k0d3hpUDNKdlpCRTZrYlE3cjNacEJhWVNqRjh0OXBXUV9kMncxN1VTNWtwWUVZNTZUWk9GVHNFd0I2YzZJYjk2SWtWdTlMeWZ4LTRYU3hFT01BQjBHOWNCYVZr?oc=5",
+      "source": "Yahoo新聞",
+      "published": "2026-03-02",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "7水庫蓄水率不到50%！ 專家曝「枯水期降雨偏少」：春雨不夠",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-02"
+    },
+    {
+      "id": "102c5178ac1d03a32af2cd72fcf971bf",
+      "title": "枯水期降雨嚴重偏少！水利署緊急啟動節水調度 元宵節鋒面來襲氣溫驟降10度",
+      "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPQUpvdXdYMEhCaUc4REZGeGZtaGZldUxYbHFQU3Q4X29lTmF2VmFYZmhLZlVGenlqekFGbUxyY0s3dm9XNWR4dEV6b0xKQXlfNkFjMDBacE1zQXZGQlluazZNU0t4VVJkaTlkT2hoRndZSmlac3FSc1k3b1FZN0c2bldrQ18zbm8zd1ZYSGktTVY3ci1GTG0zb0lKRDBWTGMyZm1qTm1aUGw4bFdSYzN2RA?oc=5",
+      "source": "商傳媒",
+      "published": "2026-03-02",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "正面",
+      "summary": "枯水期降雨嚴重偏少！水利署緊急啟動節水調度 元宵節鋒面來襲氣",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-02"
+    },
+    {
+      "id": "ea872c9ec5c4f3e285b8cd0f5859e650",
+      "title": "枯水期挑戰！「7水庫」蓄水率跌破5成 專家警告：光春雨不夠解渴 | 三立新聞網",
+      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBnbXlTZmNfbXZial9rZWh1dlcwbDdGNTBnQnBwWXh4TkRtcFFmQ3hsRXhTanpoMlZGQ2xObUloblNpNHEyQXNfeHBacFh5d2tlTDA4dzB3?oc=5",
+      "source": "LINE TODAY",
+      "published": "2026-03-02",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "中",
+      "platform": "新聞",
+      "sentiment": "負面",
+      "summary": "枯水期挑戰！「7水庫」蓄水率跌破5成 專家警告：光春雨不夠解",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-02"
+    },
+    {
+      "id": "64aa717c6a7a67e424d6ebd7be62f3d2",
+      "title": "元宵節水氣盛全台有雨 難見月全食|樂活",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBSYVdKSFVwZGY1UEc4MEtZektmcFpLdGg1OEE0YkFDZVM2cmNXTmtERVhkdnhkWml3VzF4THVZQjVPSlhUaEVpaGdRMA?oc=5",
+      "source": "僑務電子報",
+      "published": "2026-03-02",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "正面",
+      "summary": "元宵節水氣盛全台有雨 難見月全食|樂活",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-02"
+    }
+  ]
+}

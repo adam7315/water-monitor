@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-02-18"
+  },
+  "items": [
+    {
+      "id": "48c76d6ee2b1b1bca5712bfeb185ef07",
+      "title": "地瓜也能智慧抗旱：桃改場新品種全解析",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBrQ09fb2tQWnFjeHZoMmxUR2dqODVaY0tmZHVTM0IyZDhwNjNra2FhekhGNkhucjJBLXhtcjlLR3NqVTBjLU1ZRzlyWXV1VGJaYi0xMUc4U3FTa21SaXZ3?oc=5",
+      "source": "rti.org.tw",
+      "published": "2026-02-18",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "地瓜也能智慧抗旱：桃改場新品種全解析",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-18"
+    }
+  ]
+}

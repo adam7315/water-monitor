@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-02-13"
+  },
+  "items": [
+    {
+      "id": "fd8482fbb27c8d70d24b343176691759",
+      "title": "降雨少、灌溉用水影響 日月潭水位降約3公尺",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1TYThPMGtVTmlFUUs2MGlwbm1SeUJHeXFmUjlScGpJUVlmOEVneGs0SUdfQlNPNHJuX0RGWGNySjFPRnlSZ2hrSmhldW9GNUE?oc=5",
+      "source": "公視新聞網PNN",
+      "published": "2026-02-13",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "降雨少、灌溉用水影響 日月潭水位降約3公尺",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-13"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "stats": {
+    "total": 4,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 4,
+    "high_priority": 0,
+    "date": "2026-03-28"
+  },
+  "items": [
+    {
+      "id": "7aa0d0decb802139666106cbd9f10d78",
+      "title": "水資源破產：透支地球「水帳戶」該如何止血？",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE9fTjhRdXY0bGhxWG9xOTE3NjNrc00tUnZzNDNYVE1MeHg5bUVDczlXYmNCY0d3dERyZWNpZmg4YUp2czJTenk3NEt1TTN1V2lkWm9JMzU4NHVkRlh1aEItUg?oc=5",
+      "source": "tzuchi.org.tw",
+      "published": "2026-03-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "水資源破產：透支地球「水帳戶」該如何止血？",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-28"
+    },
+    {
+      "id": "3c02b492e279d7488d1b55952538abdd",
+      "title": "南市抗旱 超前部署 擴大回收水再利用 強化供水韌性",
+      "url": "https://news.google.com/rss/articles/CBMi3wJBVV95cUxQLXcwWTg1cV9PWVY3RXBkOWN0UUZRZW4wOUlXbXNEaFhNZGNCOTJCcG12MmpkX2RfNE4wSlJaZlVaaDU2VXEwakY5VC1fVGlpRlQ3cEVTd3hBWThmVEVzVGpHR1l3WmdwVm5HeTN1VGp4c1pkNy04Q3pnVlU0Y0ZDRWo1SHh6bXBRazlhZkNNcnRLc2VzY0p1UUFMQTN1b0ZQZEQ5Tm5FWkpzZ3ZNUXhfNC1jUS1YT0FRSi1CdlVvNWt0YllieDNyRjQ3bHd6NVdZWTU0OTNoUmhtQXNiZDFmVGZLSjhkWW9TNGdWTHgxRU15QldfWl9FcDN0OWJDTmt3QnNXTXZwM0xtWldwWTVBVjhuTVc3YjgwTFFmSWtRWmdHUmVNQzRmY1d1eExxcG55b3M3eVR5RmNRRlN2V2cwa3dpRDZVc05uUFlJZjMzOEZaS0tHemMwTjhUNDE0bU0?oc=5",
+      "source": "Yahoo新聞",
+      "published": "2026-03-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "南市抗旱 超前部署 擴大回收水再利用 強化供水韌性",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-28"
+    },
+    {
+      "id": "57597d04994be67b6176628711f8e1df",
+      "title": "走入深溝水源探秘境．八區處倡議珍惜水資源",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTFBOaHhuYVNTTVp3UWtOcFI3MHFDT0FXMDNkQ0t2WUd0V09BMDN5d2FCSGVaY3MzQnZCMVlydDJaS25yU2xibUpNQnRSc05abVJSYXFhWVlLNA?oc=5",
+      "source": "葛瑪蘭新聞網",
+      "published": "2026-03-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "走入深溝水源探秘境．八區處倡議珍惜水資源",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-28"
+    },
+    {
+      "id": "04dcf953fb9ab71bfa27efac8952d8e3",
+      "title": "石門水庫上游多處乾枯 北水分署：水位非低點 與5年平均值相當",
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1NMWtuYU45c0h0b0dvcC16eTh6TVFjQ2ZiRmQwclFCYXRTMUxSazBtVGFzX2czYnNBLWg5Ml93UWk1VGc3UlF0QnhOdU5RdkZDQ0pSLW95dDlCdHVDWDJCbjJyTkpyOXFU0gFuQVVfeXFMUDZHT1RUcWp6VHVZOEVSN0hEUHlqRXc3c2NRYS1Tc0FWbXJ1emQ5UEV4LTVFTVBJTE5sUWl5Mk9XbklOcTlUQjRISWk4S3V6WlVaQU8yVTVjZmV6SWpPaHQ5WmdvZGVaazdYS1ZBMnc?oc=5",
+      "source": "自由時報",
+      "published": "2026-03-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "石門水庫上游多處乾枯 北水分署：水位非低點 與5年平均值相當",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-28"
+    }
+  ]
+}

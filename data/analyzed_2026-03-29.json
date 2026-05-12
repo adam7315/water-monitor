@@ -1,0 +1,80 @@
+{
+  "stats": {
+    "total": 4,
+    "positive": 0,
+    "negative": 1,
+    "neutral": 3,
+    "high_priority": 0,
+    "date": "2026-03-29"
+  },
+  "items": [
+    {
+      "id": "5b00be7291196b80afb5671966afc260",
+      "title": "今年枯水期降雨偏少 雲林古坑茶樹大面積枯死",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1hNDJrU0RmLUw1TVVRV18zVVhPamtVMWp6WEtEcW9XbjkwUU83Y29NblpKQjhIWk1BWTBoM1BWdG15THJkWFZKdW90OUxNcGc?oc=5",
+      "source": "公視新聞網PNN",
+      "published": "2026-03-29",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "今年枯水期降雨偏少 雲林古坑茶樹大面積枯死",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-29"
+    },
+    {
+      "id": "6fc51f96dcf6787e5d1f807b81ebc005",
+      "title": "今年枯水期降雨偏少 雲林古坑茶樹大面積枯死｜20260329 公視晚間新聞",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE1VM25sYW1tT18zNl8zZjVKeWZYUkJvRWdSSkc5REFQTlVvLURMaGVvQ0RUV3RkZVlzM0hubzFPOFhUYVhPUXpJQUZQWQ?oc=5",
+      "source": "公視新聞網PNN",
+      "published": "2026-03-29",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "今年枯水期降雨偏少 雲林古坑茶樹大面積枯死｜20260329",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-29"
+    },
+    {
+      "id": "6a5c156630e23ce88b362ad82d87a359",
+      "title": "石門水庫上游多處乾枯 北水分署籲節約用水",
+      "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1JN2E4ZUFRMFVDdWVBMDRsd2JhbS1zUE5TVXB1bnVWS09nV2JPbG1HSGJGRTIwYWw2bE5UM2hhVzg1THY4NF9aU3lmS2dvN3Z6UlMtb0Rva3JiT3PSAWBBVV95cUxNN2tQTXc5Z0xmazc1YmlidF9LXy11TFV0QTZYT1otRFJZNEk3RUJKa19pNDJZNWtybXNzcHltV1FxQlY2RVp5YklleWh1RjZZRVlvWG9VbzdmbUFZdHdzQWk?oc=5",
+      "source": "自由時報",
+      "published": "2026-03-29",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "石門水庫上游多處乾枯 北水分署籲節約用水",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-29"
+    },
+    {
+      "id": "5e354e8ccbb9f93777516fdc2a4fc671",
+      "title": "水情吃緊農民成本增 籲中央重視農業用水",
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE41NVJwSS1fUGJ1SGs4QlRhVHdzMm94NXBUakRQdDJyRW9HWUg4emF6UTVReFhON2NTMnJpRjIzS1BUcENaYm02eHVTQ3drQzFNVFR5bG5vQVNfTHgwa1hFUE83NkpTVXRiM0ZxNFhn?oc=5",
+      "source": "中時新聞網",
+      "published": "2026-03-29",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "中",
+      "platform": "新聞",
+      "sentiment": "負面",
+      "summary": "水情吃緊農民成本增 籲中央重視農業用水",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-03-29"
+    }
+  ]
+}

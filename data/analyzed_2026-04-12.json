@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-04-12"
+  },
+  "items": [
+    {
+      "id": "0870852442e3bca8bd2f83f74d1e76c2",
+      "title": "雨落屋頂也要收費 德國如何打造制度留下每一滴雨？",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5pODFlRk4yamxoNTQ4X212bXd2Vmk3ZEYySzg3SzZuQkZDRGQ1aFhaM2NPSkcwZm50WHNKQ3RNRkNfU1BiZjJ2eGJYU005MVduUHR2Q08taTJkTFJ6WVc00gFkQVVfeXFMT1RYcHZ1aEhIVTRjRnkwampicjVmSkdqM296WXo5UmhSZnVtaEFHQ0hPcmVSZTlyOFFucGVRUm9QT082Szd4VE9ZXzBOWXpvdnE5bUJYMmpuaVFJV1lWVE9CdWFubg?oc=5",
+      "source": "倡議家",
+      "published": "2026-04-12",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "雨落屋頂也要收費 德國如何打造制度留下每一滴雨？",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-04-12"
+    }
+  ]
+}

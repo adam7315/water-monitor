@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 1,
+    "negative": 0,
+    "neutral": 0,
+    "high_priority": 0,
+    "date": "2026-04-11"
+  },
+  "items": [
+    {
+      "id": "63aefbf7348a51c4ca4847c510bb875e",
+      "title": "國際肯定！台中市榮獲2024 CDP「A級」殊榮與全球頂尖氣候城市並肩齊名",
+      "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1DZWU3Tzk2RWR2YThsbFBkbDhZbnFwSlI3d3dWMUtrc1FVajNnX0kzOVhXRndpOEZtWUlvSmY4NEZxaFZNVHpWZVlKTVJ3SXMtaUJVNUE4SW1YVENaSFlkcVVZOUhNTlR1a0c0MU5sdTBnVDBWcG56bnlnVXQ2V2s?oc=5",
+      "source": "economic.taichung.gov.tw",
+      "published": "2026-04-11",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "正面",
+      "summary": "國際肯定！台中市榮獲2024 CDP「A級」殊榮與全球頂尖氣",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-04-11"
+    }
+  ]
+}

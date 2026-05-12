@@ -1,0 +1,63 @@
+{
+  "stats": {
+    "total": 3,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 3,
+    "high_priority": 0,
+    "date": "2026-02-28"
+  },
+  "items": [
+    {
+      "id": "e54d74d3107d47bec217919a7e131bcc",
+      "title": "西半部40年來最乾冬季！曾文水庫今年首度人工增雨",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9rdnl1NEJxODJVZF92bHM2THQxbUNDSTBoaThPaG04TktfNDUxdDZjTERBemFLZmJremhaMkVacHJJM3pLOWEtUGFtNU5TM0cxZG5BUnlCRVlGUVN2OURtSWdBOUtvRnRlMjhV?oc=5",
+      "source": "翻爆",
+      "published": "2026-02-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "南部水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "西半部40年來最乾冬季！曾文水庫今年首度人工增雨",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "ed463307effaa0a80ff0e910384fa768",
+      "title": "再生水明起供應 推廣日加強再生水宣傳",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1Id0F5NEVZcEFiTVphVVZpWW5wX3pWWlNCdDZaYlFkQ3RobW92U1M3Y3UyalhtSWY4TEhFdHAyTlVTSDAwbUF0WFlTQ2tieERHcGc?oc=5",
+      "source": "澳門特別行政區政府入口網站",
+      "published": "2026-02-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "再生水明起供應 推廣日加強再生水宣傳",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-28"
+    },
+    {
+      "id": "eabea713245cbad2b672d38b45600779",
+      "title": "再生水供應入戶石排灣公屋澳門大學",
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE9hckU4aHJQc2M5Q0RKWEVQeGJid1RvVWdXWlpUMk5sek5HdGk1T2hCUzJBT3QwSUo3ZGdNXzhtRlhBWHVKT21JaFlZazRPdWhjNjZ5Rm01czFhblc2Nm91bWZlN3BndnhwM05hVGRtSE1aZw?oc=5",
+      "source": "澳門廣播電視股份有限公司",
+      "published": "2026-02-28",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "再生水供應入戶石排灣公屋澳門大學",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-28"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "stats": {
+    "total": 1,
+    "positive": 0,
+    "negative": 0,
+    "neutral": 1,
+    "high_priority": 0,
+    "date": "2026-02-16"
+  },
+  "items": [
+    {
+      "id": "c679b13b47c642c3f1f797a1d0ff65f9",
+      "title": "聯合阿聯酋可持續水 | 西門子",
+      "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNVERMMG9BZWptZlB1QUhrWi1VeU1iQ3I5MUJ4NjJWNDdhMmNob1JnOGRkSTNwcWE0SGFwUVBCU2R3MWJGMVdIQjZtcllobXczYVZtRDh6a01ueHA1R1BnQTZLdFFUV0NEZ0Z1WXlqX1Z0a0lPaXVTM2lhazE5Z3BYMS1HbWU4VUpDNmxRUUFzUVFScGQ0TjZxcEtES3NqRTg?oc=5",
+      "source": "Siemens",
+      "published": "2026-02-16",
+      "content": "",
+      "keyword": "水資源相關",
+      "category": "全台水資源",
+      "priority": "低",
+      "platform": "新聞",
+      "sentiment": "中立",
+      "summary": "聯合阿聯酋可持續水 | 西門子",
+      "is_credible_threat": false,
+      "line_message": "",
+      "date": "2026-02-16"
+    }
+  ]
+}
