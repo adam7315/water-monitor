@@ -264,14 +264,13 @@ function init() {
     opt.value = d; opt.textContent = d;
     sel.appendChild(opt);
   });
-  // 預設：最新有資料的日期
-  const defaultDate = availDates.length > 0 ? availDates[0] : 'ALL';
-  sel.value = defaultDate;
+  // 預設：全部近30天
+  sel.value = 'ALL';
 
   renderTrendChart();
   renderSpotlight();
   renderTopicHeat();
-  renderDay(defaultDate);
+  renderDay('ALL');
 
   sel.addEventListener('change', e => renderDay(e.target.value));
   ['filterCat','filterSent','filterPlatform'].forEach(id =>
