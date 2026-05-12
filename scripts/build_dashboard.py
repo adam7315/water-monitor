@@ -105,20 +105,44 @@ def build_html():
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  body { font-family: -apple-system,"Noto Sans TC",sans-serif; }
-  .card-neg  { border-left: 4px solid #ef4444; }
-  .card-pos  { border-left: 4px solid #22c55e; }
-  .card-neu  { border-left: 4px solid #cbd5e1; }
+  body { font-family: -apple-system,"Noto Sans TC",sans-serif; background:#f0f4f8; }
+  /* ── Dark Sidebar ── */
+  .sidebar { background:#0f2040; color:#e8eef5; }
+  .sidebar-label { color:#7eb4d8; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.375rem; display:block; }
+  .sidebar-select { width:100%; background:#1a3050; border:1px solid #2d4a6e; color:#e8eef5; border-radius:.5rem; padding:.375rem .625rem; font-size:.8rem; outline:none; appearance:none; }
+  .sidebar-select:focus { border-color:#4a8fc4; }
+  .sidebar-section { border-bottom:1px solid #1e3a60; padding:1rem; }
+  .sidebar-section:last-child { border-bottom:none; }
+  .sidebar-title { color:#a8c8e8; font-size:.8rem; font-weight:700; margin-bottom:.75rem; letter-spacing:.03em; }
+  /* ── KPI Cards ── */
+  .kpi-card { background:white; border-radius:1rem; padding:1rem 1.25rem; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+  .kpi-num  { font-size:2.25rem; font-weight:800; line-height:1; }
+  /* ── News Cards ── */
+  .card-neg  { border-left:4px solid #ef4444; }
+  .card-pos  { border-left:4px solid #22c55e; }
+  .card-neu  { border-left:4px solid #cbd5e1; }
+  .news-card { background:white; border-radius:.75rem; box-shadow:0 1px 4px rgba(0,0,0,.06); transition:box-shadow .15s; }
+  .news-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.12); }
+  .link-title { color:#1d4ed8; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+  .link-title:hover { color:#1e40af; }
+  .line-box   { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #86efac; border-radius:.75rem; }
+  .urgent-card{ background:#fff1f2; border:1px solid #fca5a5; border-radius:.75rem; }
+  /* ── Bubble Cloud ── */
+  .bubble-cloud { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:.5rem 0; min-height:4rem; justify-content:center; }
+  .bubble { border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    color:white; font-weight:700; cursor:pointer; transition:transform .15s, opacity .15s; text-align:center; line-height:1.2; }
+  .bubble:hover { transform:scale(1.12); opacity:.85; }
+  /* ── Donut ── */
+  .donut-wrap { display:flex; flex-direction:column; align-items:center; gap:.2rem; cursor:pointer; }
+  .donut-pct  { font-size:1.1rem; font-weight:800; line-height:1; }
+  .donut-lbl  { font-size:.65rem; color:#7eb4d8; }
+  /* ── Misc ── */
   .ai-badge  { background:linear-gradient(135deg,#667eea,#764ba2); }
   .pulse     { animation:pulse 2s infinite; }
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
   .bar-fill  { transition:width .8s ease; }
-  .news-card { transition:box-shadow .15s; }
-  .news-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.10); }
-  .link-title { color:#1d4ed8; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
-  .link-title:hover { color:#1e40af; }
-  .line-box  { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #86efac; }
-  .urgent-card { background:#fff1f2; border:1px solid #fca5a5; border-radius:12px; }
+  .tag-btn   { font-size:.7rem; padding:.25rem .75rem; border-radius:9999px; transition:opacity .15s; cursor:pointer; }
+  .tag-btn:hover { opacity:.7; }
   @media(max-width:1023px){ .sidebar{ display:none !important; } .layout-grid{ grid-template-columns:1fr !important; } }
 </style>
 </head>
@@ -169,23 +193,27 @@ def build_html():
 </div>
 
 <!-- ── Stats Row ── -->
-<div class="max-w-7xl mx-auto px-4 pt-3 pb-2">
+<div class="max-w-7xl mx-auto px-4 pt-4 pb-3">
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 text-center">
-      <div class="text-2xl font-bold text-slate-700" id="statTotal">-</div>
-      <div class="text-slate-400 text-xs mt-0.5">今日蒐集</div>
+    <div class="kpi-card border-t-4 border-blue-400">
+      <div class="text-xs text-slate-400 mb-1">今日蒐集</div>
+      <div class="kpi-num text-slate-700" id="statTotal">-</div>
+      <div class="text-xs text-slate-400 mt-1">則新聞</div>
     </div>
-    <div class="bg-red-50 rounded-xl p-3 shadow-sm border border-red-200 text-center">
-      <div class="text-2xl font-bold text-red-600" id="statNeg">-</div>
-      <div class="text-slate-400 text-xs mt-0.5">今日負面</div>
+    <div class="kpi-card border-t-4 border-red-500">
+      <div class="text-xs text-slate-400 mb-1">今日負面</div>
+      <div class="kpi-num text-red-600" id="statNeg">-</div>
+      <div class="text-xs text-slate-400 mt-1">則需關注</div>
     </div>
-    <div class="bg-white rounded-xl p-3 shadow-sm border border-green-100 text-center">
-      <div class="text-2xl font-bold text-green-500" id="statPos">-</div>
-      <div class="text-slate-400 text-xs mt-0.5">今日正面</div>
+    <div class="kpi-card border-t-4 border-green-500">
+      <div class="text-xs text-slate-400 mb-1">今日正面</div>
+      <div class="kpi-num text-green-600" id="statPos">-</div>
+      <div class="text-xs text-slate-400 mt-1">則正向報導</div>
     </div>
-    <div class="bg-orange-50 rounded-xl p-3 shadow-sm border border-orange-200 text-center">
-      <div class="text-2xl font-bold text-orange-500" id="statHigh">-</div>
-      <div class="text-slate-400 text-xs mt-0.5">高優先待處理</div>
+    <div class="kpi-card border-t-4 border-orange-500">
+      <div class="text-xs text-slate-400 mb-1">高優先</div>
+      <div class="kpi-num text-orange-500" id="statHigh">-</div>
+      <div class="text-xs text-slate-400 mt-1">則待立即處理</div>
     </div>
   </div>
 </div>
@@ -206,24 +234,22 @@ def build_html():
 <div class="max-w-7xl mx-auto px-4 py-3 pb-10">
   <div class="layout-grid" style="display:grid;grid-template-columns:272px 1fr;gap:16px;align-items:start">
 
-    <!-- ── Sidebar ── -->
-    <aside class="sidebar space-y-4">
+    <!-- ── Sidebar (dark) ── -->
+    <aside class="sidebar rounded-xl overflow-hidden shadow-xl" style="position:sticky;top:12px">
 
       <!-- Filters -->
-      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
-        <h3 class="font-semibold text-slate-600 text-sm mb-3">🔍 篩選條件</h3>
-        <div class="space-y-2.5">
+      <div class="sidebar-section">
+        <div class="sidebar-title">🔍 篩選條件</div>
+        <div class="space-y-3">
           <div>
-            <label class="text-xs text-slate-400 block mb-1">日期</label>
-            <select id="filterDate"
-              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <label class="sidebar-label">日期</label>
+            <select id="filterDate" class="sidebar-select">
               <option value="ALL">📋 全部（近30天）</option>
             </select>
           </div>
           <div>
-            <label class="text-xs text-slate-400 block mb-1">分類</label>
-            <select id="filterCat"
-              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <label class="sidebar-label">分類</label>
+            <select id="filterCat" class="sidebar-select">
               <option value="">全部分類</option>
               <option value="海淡廠">海淡廠</option>
               <option value="南部水資源">南部水資源</option>
@@ -233,9 +259,8 @@ def build_html():
             </select>
           </div>
           <div>
-            <label class="text-xs text-slate-400 block mb-1">情感傾向</label>
-            <select id="filterSent"
-              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <label class="sidebar-label">情感傾向</label>
+            <select id="filterSent" class="sidebar-select">
               <option value="">全部</option>
               <option value="負面">🔴 負面</option>
               <option value="正面">🟢 正面</option>
@@ -243,9 +268,8 @@ def build_html():
             </select>
           </div>
           <div>
-            <label class="text-xs text-slate-400 block mb-1">平台</label>
-            <select id="filterPlatform"
-              class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <label class="sidebar-label">平台</label>
+            <select id="filterPlatform" class="sidebar-select">
               <option value="">全部平台</option>
               <option value="新聞">新聞媒體</option>
               <option value="PTT">PTT</option>
@@ -254,22 +278,28 @@ def build_html():
             </select>
           </div>
           <button onclick="resetFilters()"
-            class="w-full text-xs text-blue-500 border border-blue-200 rounded-lg py-1.5 hover:bg-blue-50 transition">
+            class="w-full text-xs border border-blue-500 text-blue-300 rounded-lg py-1.5 hover:bg-blue-900 transition">
             重置篩選
           </button>
         </div>
       </div>
 
-      <!-- Spotlight -->
-      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
-        <h3 class="font-semibold text-slate-600 text-sm mb-3">📌 近期焦點新聞</h3>
-        <div id="spotlightList" class="space-y-3"></div>
+      <!-- Sentiment Donut -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">📊 近30天情感分析</div>
+        <div class="flex justify-around items-center py-2" id="sentimentDonuts"></div>
       </div>
 
       <!-- Topic Heat -->
-      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
-        <h3 class="font-semibold text-slate-600 text-sm mb-3">🌡 議題負面熱度</h3>
+      <div class="sidebar-section">
+        <div class="sidebar-title">🌡 議題負面熱度</div>
         <div id="topicHeat" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Spotlight -->
+      <div class="sidebar-section">
+        <div class="sidebar-title">📌 近期焦點新聞</div>
+        <div id="spotlightList" class="space-y-3"></div>
       </div>
 
     </aside>
@@ -286,6 +316,15 @@ def build_html():
         <div style="height:170px">
           <canvas id="trendChart"></canvas>
         </div>
+      </div>
+
+      <!-- Keyword Bubble Cloud -->
+      <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="font-semibold text-slate-600 text-sm">☁ 關鍵詞熱度</h3>
+          <span class="text-xs text-slate-400">泡泡大小 = 出現頻率 · 點擊搜尋</span>
+        </div>
+        <div id="keywordCloud" class="bubble-cloud"></div>
       </div>
 
       <!-- Quick tags + search -->
@@ -366,6 +405,8 @@ function init() {
   sel.value = 'ALL';
 
   renderTrendChart();
+  renderSentimentDonut();
+  renderKeywordCloud();
   renderSpotlight();
   renderTopicHeat();
   renderDay('ALL');
@@ -507,10 +548,8 @@ function quickSearch(kw) { document.getElementById('searchBox').value = kw; appl
 function resetFilters() {
   ['filterCat','filterSent','filterPlatform'].forEach(id => document.getElementById(id).value='');
   document.getElementById('searchBox').value='';
-  const sel = document.getElementById('filterDate');
-  const dates = Object.keys(MONITOR_DATA).sort().reverse();
-  if (dates.length) { sel.value = dates[0]; renderDay(dates[0]); }
-  else applyFilters();
+  document.getElementById('filterDate').value='ALL';
+  renderDay('ALL');
 }
 
 /* ── 新聞列表 ── */
@@ -563,20 +602,79 @@ function renderList(items) {
   }).join('');
 }
 
+/* ── 情感三圓環（SVG）── */
+function renderSentimentDonut() {
+  const el = document.getElementById('sentimentDonuts');
+  let pos=0, neg=0, neu=0;
+  Object.values(MONITOR_DATA).forEach(d => {
+    const s = d.stats || {};
+    pos += s.positive||0; neg += s.negative||0; neu += s.neutral||0;
+  });
+  const total = pos + neg + neu || 1;
+  const pctNeg = Math.round(neg/total*100);
+  const pctNeu = Math.round(neu/total*100);
+  const pctPos = 100 - pctNeg - pctNeu;
+
+  const makeSVG = (pct, color, label) => {
+    const r = 15.9, circ = +(2 * Math.PI * r).toFixed(2);
+    const dash = +(pct / 100 * circ).toFixed(2);
+    const gap  = +(circ - dash).toFixed(2);
+    return `<div class="donut-wrap" onclick="setFilter('filterSent','${label}')">
+      <svg width="68" height="68" viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="${r}" fill="none" stroke="#1e3a60" stroke-width="3.8"/>
+        <circle cx="18" cy="18" r="${r}" fill="none" stroke="${color}" stroke-width="3.8"
+          stroke-dasharray="${dash} ${gap}" stroke-dashoffset="25"/>
+        <text x="18" y="21" text-anchor="middle" font-size="7.5" font-weight="bold" fill="${color}">${pct}%</text>
+      </svg>
+      <div class="donut-pct" style="color:${color}">${pct}%</div>
+      <div class="donut-lbl">${label === '負面' ? '🔴 負面' : label === '正面' ? '🟢 正面' : '⚪ 中立'}</div>
+    </div>`;
+  };
+
+  el.innerHTML =
+    makeSVG(pctNeg, '#ef4444', '負面') +
+    makeSVG(pctNeu, '#94a3b8', '中立') +
+    makeSVG(pctPos, '#22c55e', '正面');
+}
+
+/* ── 關鍵詞氣泡雲 ── */
+function renderKeywordCloud() {
+  const el = document.getElementById('keywordCloud');
+  if (!KEYWORD_RANKING || !KEYWORD_RANKING.length) {
+    el.innerHTML = '<span class="text-xs text-slate-400">暫無資料</span>'; return;
+  }
+  const negKws = ['缺水','乾旱','限水','停水','汙染','污染','危機','警戒','漏水','不足','告急'];
+  const maxCount = KEYWORD_RANKING[0][1] || 1;
+  el.innerHTML = KEYWORD_RANKING.slice(0, 20).map(([kw, count]) => {
+    const ratio = count / maxCount;
+    const size  = Math.round(44 + ratio * 54);
+    const fsize = Math.max(10, Math.round(size / 4.8));
+    const isNeg = negKws.some(n => kw.includes(n));
+    let color;
+    if (isNeg) {
+      color = ratio > .6 ? '#b91c1c' : ratio > .3 ? '#dc2626' : '#ef4444';
+    } else {
+      color = ratio > .6 ? '#1a3a6c' : ratio > .3 ? '#1e5799' : '#3d7ab5';
+    }
+    return `<div class="bubble" style="width:${size}px;height:${size}px;font-size:${fsize}px;background:${color}"
+      onclick="quickSearch('${kw}')" title="${kw}：${count}次">${kw}</div>`;
+  }).join('');
+}
+
 /* ── 側欄：近期焦點新聞 ── */
 function renderSpotlight() {
   const el = document.getElementById('spotlightList');
   if (!SPOTLIGHT || !SPOTLIGHT.length) {
-    el.innerHTML = '<p class="text-xs text-slate-300">暫無資料</p>'; return;
+    el.innerHTML = '<p class="text-xs text-blue-400">暫無資料</p>'; return;
   }
   el.innerHTML = SPOTLIGHT.map(item => `
-    <div class="border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+    <div style="border-bottom:1px solid #1e3a60" class="pb-2 last:border-0 last:pb-0">
       <a href="${item.url||'#'}" target="_blank" rel="noopener"
-         class="link-title text-xs font-medium block leading-snug mb-1">
-        ${(item.title||'').slice(0,45)}${item.title?.length>45?'…':''}
+         class="text-xs font-medium block leading-snug mb-1 text-blue-100 hover:text-white transition">
+        ${(item.title||'').slice(0,45)}${(item.title?.length||0)>45?'…':''}
       </a>
-      <div class="flex items-center gap-1.5 text-xs text-slate-400">
-        <span class="px-1.5 py-0.5 rounded bg-red-100 text-red-600 text-xs">${item.sentiment||''}</span>
+      <div class="flex items-center gap-1.5 text-xs text-blue-300">
+        <span style="background:#3b1d1d;color:#f87171" class="px-1.5 py-0.5 rounded">${item.sentiment||''}</span>
         <span>${item.source||''}</span>
         <span class="ml-auto">${item.date?.slice(5)||''}</span>
       </div>
@@ -587,7 +685,7 @@ function renderSpotlight() {
 function renderTopicHeat() {
   const el = document.getElementById('topicHeat');
   if (!TOPIC_HEAT || !Object.keys(TOPIC_HEAT).length) {
-    el.innerHTML = '<p class="text-xs text-slate-300">暫無資料</p>'; return;
+    el.innerHTML = '<p class="text-xs text-blue-400">暫無資料</p>'; return;
   }
   const sorted = Object.entries(TOPIC_HEAT).sort((a,b) => (b[1].negative||0) - (a[1].negative||0));
   const maxNeg = sorted[0]?.[1]?.negative || 1;
@@ -597,11 +695,11 @@ function renderTopicHeat() {
     return `
     <div class="cursor-pointer group" onclick="setFilter('filterCat','${cat}')">
       <div class="flex justify-between text-xs mb-1">
-        <span class="text-slate-600 group-hover:text-red-600 transition">${cat}</span>
-        <span class="text-red-400 font-medium">${s.negative||0}則負面 <span class="text-slate-300">(${rate}%)</span></span>
+        <span class="text-blue-200 group-hover:text-white transition">${cat}</span>
+        <span class="text-red-400 font-medium">${s.negative||0}則 <span class="text-blue-400">(${rate}%)</span></span>
       </div>
-      <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div class="h-full bar-fill rounded-full bg-red-400" style="width:${pct}%"></div>
+      <div class="h-1.5 rounded-full overflow-hidden" style="background:#1e3a60">
+        <div class="h-full bar-fill rounded-full bg-red-500" style="width:${pct}%"></div>
       </div>
     </div>`;
   }).join('');
