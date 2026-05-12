@@ -183,7 +183,7 @@
       <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-100">
         <div class="flex justify-between items-center mb-2">
           <h3 class="font-semibold text-slate-600 text-sm">📉 負面聲浪趨勢（近30天）</h3>
-          <span class="text-xs text-slate-400">長條 = 每日負面則數 ／ 折線 = 7日平均</span>
+          <span class="text-xs text-blue-400 cursor-pointer select-none">👆 點擊長條篩選當日負面新聞</span>
         </div>
         <div style="height:170px">
           <canvas id="trendChart"></canvas>
@@ -528,6 +528,27 @@ function renderTrendChart() {
     },
     options: {
       responsive:true, maintainAspectRatio:false,
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const idx = elements[0].index;
+        const mmdd = TREND_DATA[idx].date; // "MM-DD"
+        const fullDate = Object.keys(MONITOR_DATA).find(d => d.slice(5) === mmdd);
+        if (!fullDate) return;
+        // 設定篩選條件：該日 + 負面
+        document.getElementById('filterDate').value = fullDate;
+        document.getElementById('filterSent').value = '負面';
+        renderDay(fullDate);
+        // 滾動到新聞列表
+        setTimeout(() => document.getElementById('newsList').scrollIntoView({behavior:'smooth'}), 100);
+        // 高亮選中的長條
+        const colors = TREND_DATA.map((_, i) =>
+          i === idx ? 'rgba(239,68,68,.95)' : 'rgba(239,68,68,.35)');
+        trendChartObj.data.datasets[0].backgroundColor = colors;
+        trendChartObj.update('none');
+      },
+      onHover: (evt, elements) => {
+        evt.native.target.style.cursor = elements.length ? 'pointer' : 'default';
+      },
       plugins:{ legend:{ position:'top', labels:{ font:{size:11}, boxWidth:12, padding:12 }}},
       scales:{
         x:{ grid:{display:false}, ticks:{font:{size:10}, maxRotation:45} },
