@@ -51,7 +51,7 @@ def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
     items = []
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:8]:
+        for entry in feed.entries[:4]:
             uid = dedup_id(entry.get("title",""), entry.get("link",""))
             if uid in seen_hashes:
                 continue

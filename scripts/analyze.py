@@ -1,9 +1,11 @@
 """
 使用 Google Gemini API 進行情感分析與澄清文字產生
 """
-import json, os, time
+import json, os, time, signal
 from datetime import date
 import google.generativeai as genai
+
+MAX_ITEMS = 50   # 每天最多分析幾則（避免超時）
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 TODAY    = date.today().isoformat()
@@ -56,16 +58,18 @@ def analyze_batch(items: list, model) -> list:
 priority 判斷：高=負面且可能屬實且易擴散、中=負面但影響有限、低=正面或中立"""
 
     try:
-        response = model.generate_content(prompt)
+        response = model.generate_content(
+            prompt,
+            request_options={"timeout": 30}  # 30 秒 timeout
+        )
         text = response.text.strip()
-        # 清除 markdown code block
         text = text.replace("```json", "").replace("```", "").strip()
         results = json.loads(text)
         if len(results) != len(items):
             raise ValueError(f"回傳數量不符：期待 {len(items)}，實得 {len(results)}")
         return results
     except Exception as e:
-        print(f"  Gemini 分析失敗：{e}")
+        print(f"  Gemini 分析失敗（略過）：{e}")
         return [{"sentiment": "中立", "category": items[i].get("category","全台水資源"),
                  "summary": items[i].get("title","")[:50], "is_credible_threat": False,
                  "line_message": "", "priority": "低", "reason": "分析失敗"} for i in range(len(items))]
@@ -83,7 +87,12 @@ def main():
     with open(raw_path, encoding="utf-8") as f:
         items = json.load(f)
 
-    print(f"=== 開始分析 {len(items)} 則新聞 ===")
+    # 依優先級排序，取前 MAX_ITEMS 則（高優先先分析）
+    priority_map = {"海淡廠": 1, "南部水資源": 2, "社群輿情": 2, "全台水資源": 3, "國際": 4}
+    items.sort(key=lambda x: priority_map.get(x.get("category",""), 5))
+    items = items[:MAX_ITEMS]
+
+    print(f"=== 開始分析 {len(items)} 則新聞（上限 {MAX_ITEMS}）===")
     genai.configure(api_key=GEMINI_API_KEY)
     model = genai.GenerativeModel("gemini-1.5-flash")
 
