@@ -1,60 +1,78 @@
 """
-使用 Google Gemini API 進行情感分析與澄清文字產生（優化版）
-每次分析一則，加入 20 秒執行緒超時，最多分析 30 則
+輿情分析：關鍵字預分類 + Gemini REST API（僅負面項目呼叫）
+使用 requests 直接呼叫 REST API，支援真正的 HTTP 超時
 """
-import json, os, time
+import json, os, time, requests
 from datetime import date
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
-import google.generativeai as genai
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 TODAY    = date.today().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 MAX_ITEMS = 30
-CALL_TIMEOUT = 25  # 秒
+API_TIMEOUT = 20  # 秒，requests HTTP 超時
 
-def analyze_one(model, item: dict) -> dict:
+GEMINI_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    "gemini-1.5-flash:generateContent?key={key}"
+)
+
+# ── 關鍵字分類規則 ──────────────────────────────────────────
+NEGATIVE_KEYWORDS = [
+    "缺水", "乾旱", "限水", "停水", "水荒", "汙染", "污染", "水質",
+    "抗議", "反對", "爭議", "危機", "警戒", "警告", "風險", "問題",
+    "漏水", "管線破裂", "供水不足", "水庫低", "蓄水不足",
+    "民怨", "投訴", "批評", "質疑", "延誤", "失敗", "弊端",
+    "water crisis", "water shortage", "contamination"
+]
+POSITIVE_KEYWORDS = [
+    "完工", "啟用", "通水", "竣工", "提升", "改善", "增加", "擴充",
+    "節水", "豐水", "蓄水充足", "水情穩定", "供水穩定",
+    "榮獲", "獲獎", "表揚", "肯定", "成功", "突破"
+]
+
+def keyword_classify(text: str) -> str:
+    t = text.lower()
+    neg_score = sum(1 for kw in NEGATIVE_KEYWORDS if kw in t)
+    pos_score = sum(1 for kw in POSITIVE_KEYWORDS if kw in t)
+    if neg_score > pos_score:
+        return "負面"
+    elif pos_score > 0:
+        return "正面"
+    return "中立"
+
+def keyword_priority(sentiment: str, category: str) -> str:
+    if sentiment == "負面":
+        if category in ("海淡廠", "南部水資源"):
+            return "高"
+        return "中"
+    return "低"
+
+def gemini_clarify(item: dict) -> str:
     title   = item.get("title", "")[:100]
     content = item.get("content", "")[:200]
     source  = item.get("source", "")
-    platform= item.get("platform", "")
-
-    prompt = f"""分析這則新聞（繁體中文回答）：
-標題：{title}
-內容：{content}
-來源：{source}（{platform}）
-
-回傳 JSON（不要任何其他文字）：
-{{"sentiment":"正面|負面|中立","category":"海淡廠|南部水資源|全台水資源|社群輿情|國際","summary":"30字摘要","priority":"高|中|低","is_credible_threat":false,"line_message":"（負面時填200字澄清，其他留空）"}}
-
-priority規則：高=負面且影響大、中=負面輕微、低=正面或中立"""
-
+    prompt = (
+        f"這則新聞被判斷為負面輿情，請用繁體中文撰寫一段約200字的澄清說明，"
+        f"適合直接傳送到 LINE 群組使用。\n"
+        f"標題：{title}\n內容：{content}\n來源：{source}\n\n"
+        f"只回傳澄清文字，不要任何標題或前言。"
+    )
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"maxOutputTokens": 400, "temperature": 0.3}
+    }
     try:
-        resp = model.generate_content(prompt)
-        text = resp.text.strip().replace("```json","").replace("```","").strip()
-        return json.loads(text)
+        r = requests.post(
+            GEMINI_URL.format(key=GEMINI_API_KEY),
+            json=payload,
+            timeout=API_TIMEOUT
+        )
+        r.raise_for_status()
+        data = r.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
     except Exception as e:
-        return {
-            "sentiment": "中立",
-            "category": item.get("category", "全台水資源"),
-            "summary": title[:30],
-            "priority": "低",
-            "is_credible_threat": False,
-            "line_message": ""
-        }
-
-def analyze_with_timeout(model, item):
-    with ThreadPoolExecutor(max_workers=1) as ex:
-        future = ex.submit(analyze_one, model, item)
-        try:
-            return future.result(timeout=CALL_TIMEOUT)
-        except FuturesTimeout:
-            print(f"  超時略過：{item.get('title','')[:30]}")
-            return {
-                "sentiment": "中立", "category": item.get("category","全台水資源"),
-                "summary": item.get("title","")[:30], "priority": "低",
-                "is_credible_threat": False, "line_message": ""
-            }
+        print(f"    Gemini 失敗：{e}")
+        return ""
 
 def main():
     if not GEMINI_API_KEY:
@@ -67,29 +85,51 @@ def main():
     with open(raw_path, encoding="utf-8") as f:
         items = json.load(f)
 
-    # 依優先排序，只取前 MAX_ITEMS 則
+    # 依類別優先排序，只取前 MAX_ITEMS
     priority_map = {"海淡廠": 1, "社群輿情": 2, "南部水資源": 2, "全台水資源": 3, "國際": 4}
-    items.sort(key=lambda x: priority_map.get(x.get("category",""), 5))
+    items.sort(key=lambda x: priority_map.get(x.get("category", ""), 5))
     items = items[:MAX_ITEMS]
 
     print(f"=== 分析 {len(items)} 則新聞（最多 {MAX_ITEMS}）===")
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
 
     analyzed = []
+    neg_count = 0
     for i, item in enumerate(items):
-        print(f"  [{i+1}/{len(items)}] {item.get('title','')[:40]}...")
-        result = analyze_with_timeout(model, item)
-        merged = {**item, **result, "date": TODAY}
+        title = item.get("title", "")
+        text  = title + " " + item.get("content", "")
+
+        sentiment = keyword_classify(text)
+        category  = item.get("category", "全台水資源")
+        priority  = keyword_priority(sentiment, category)
+        summary   = title[:30]
+        line_msg  = ""
+
+        print(f"  [{i+1}/{len(items)}] {sentiment} {title[:40]}...")
+
+        if sentiment == "負面":
+            neg_count += 1
+            print(f"    → 呼叫 Gemini 產生澄清文字（第 {neg_count} 則負面）")
+            line_msg = gemini_clarify(item)
+            time.sleep(2)  # 避免 rate limit
+
+        merged = {
+            **item,
+            "sentiment": sentiment,
+            "category": category,
+            "summary": summary,
+            "priority": priority,
+            "is_credible_threat": sentiment == "負面" and priority == "高",
+            "line_message": line_msg,
+            "date": TODAY
+        }
         analyzed.append(merged)
-        time.sleep(1)  # 避免 rate limit
 
     stats = {
-        "total": len(analyzed),
-        "positive": sum(1 for x in analyzed if x.get("sentiment") == "正面"),
-        "negative": sum(1 for x in analyzed if x.get("sentiment") == "負面"),
-        "neutral":  sum(1 for x in analyzed if x.get("sentiment") == "中立"),
-        "high_priority": sum(1 for x in analyzed if x.get("priority") == "高"),
+        "total":        len(analyzed),
+        "positive":     sum(1 for x in analyzed if x.get("sentiment") == "正面"),
+        "negative":     sum(1 for x in analyzed if x.get("sentiment") == "負面"),
+        "neutral":      sum(1 for x in analyzed if x.get("sentiment") == "中立"),
+        "high_priority":sum(1 for x in analyzed if x.get("priority") == "高"),
         "date": TODAY
     }
 
@@ -98,6 +138,7 @@ def main():
         json.dump({"stats": stats, "items": analyzed}, f, ensure_ascii=False, indent=2)
 
     print(f"\n正面:{stats['positive']} 負面:{stats['negative']} 中立:{stats['neutral']} 高優先:{stats['high_priority']}")
+    print(f"Gemini 呼叫次數：{neg_count}（僅負面項目）")
     print(f"完成 → {out_path}")
 
 if __name__ == "__main__":
