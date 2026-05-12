@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>南水資源分署 輿情監控系統</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .card-negative { border-left: 4px solid #ef4444; }
+  .card-positive { border-left: 4px solid #22c55e; }
+  .card-neutral  { border-left: 4px solid #94a3b8; }
+  .badge-high    { background:#fee2e2; color:#dc2626; }
+  .badge-mid     { background:#fef3c7; color:#d97706; }
+  .badge-low     { background:#f1f5f9; color:#64748b; }
+  .badge-positive{ background:#dcfce7; color:#16a34a; }
+  .badge-negative{ background:#fee2e2; color:#dc2626; }
+  .badge-neutral { background:#f1f5f9; color:#64748b; }
+  .clarify-box   { background:#fffbeb; border:1px solid #fcd34d; border-radius:6px; padding:12px; margin-top:8px; }
+  .copy-btn      { cursor:pointer; }
+  @media (max-width:640px) { .stat-grid { grid-template-columns: repeat(2,1fr); } }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<!-- Header -->
+<div class="bg-blue-800 text-white py-4 px-4 shadow">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+    <div>
+      <h1 class="text-xl font-bold">💧 南水資源分署 輿情監控</h1>
+      <p class="text-blue-200 text-sm mt-1" id="lastUpdate">載入中...</p>
+    </div>
+    <div class="text-right">
+      <div class="text-2xl font-bold" id="headerNegCount">-</div>
+      <div class="text-blue-200 text-xs">今日負面需處理</div>
+    </div>
+  </div>
+</div>
+
+<!-- Alert Bar -->
+<div id="alertBar" class="hidden bg-red-600 text-white px-4 py-3">
+  <div class="max-w-6xl mx-auto flex items-center gap-2">
+    <span class="text-lg">🚨</span>
+    <span id="alertText" class="font-medium text-sm"></span>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="max-w-6xl mx-auto px-4 py-4">
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 stat-grid">
+    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+      <div class="text-3xl font-bold text-gray-700" id="statTotal">-</div>
+      <div class="text-gray-400 text-xs mt-1">今日蒐集</div>
+    </div>
+    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+      <div class="text-3xl font-bold text-red-500" id="statNeg">-</div>
+      <div class="text-gray-400 text-xs mt-1">負面</div>
+    </div>
+    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+      <div class="text-3xl font-bold text-green-500" id="statPos">-</div>
+      <div class="text-gray-400 text-xs mt-1">正面</div>
+    </div>
+    <div class="bg-white rounded-lg p-4 shadow-sm text-center">
+      <div class="text-3xl font-bold text-orange-500" id="statHigh">-</div>
+      <div class="text-gray-400 text-xs mt-1">高優先待處理</div>
+    </div>
+  </div>
+</div>
+
+<!-- Filters -->
+<div class="max-w-6xl mx-auto px-4 pb-3">
+  <div class="bg-white rounded-lg p-4 shadow-sm flex flex-wrap gap-3 items-center">
+    <div>
+      <label class="text-xs text-gray-500 block mb-1">日期</label>
+      <input type="date" id="filterDate" class="border rounded px-2 py-1 text-sm">
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-1">分類</label>
+      <select id="filterCat" class="border rounded px-2 py-1 text-sm">
+        <option value="">全部分類</option>
+        <option value="海淡廠">海淡廠</option>
+        <option value="南部水資源">南部水資源</option>
+        <option value="全台水資源">全台水資源</option>
+        <option value="社群輿情">社群輿情</option>
+        <option value="國際">國際</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-1">情感</label>
+      <select id="filterSent" class="border rounded px-2 py-1 text-sm">
+        <option value="">全部</option>
+        <option value="負面">負面</option>
+        <option value="正面">正面</option>
+        <option value="中立">中立</option>
+      </select>
+    </div>
+    <div>
+      <label class="text-xs text-gray-500 block mb-1">平台</label>
+      <select id="filterPlatform" class="border rounded px-2 py-1 text-sm">
+        <option value="">全部平台</option>
+        <option value="FB">Facebook</option>
+        <option value="Instagram">Instagram</option>
+        <option value="PTT">PTT</option>
+        <option value="Dcard">Dcard</option>
+        <option value="新聞">新聞媒體</option>
+      </select>
+    </div>
+    <div class="ml-auto">
+      <button onclick="resetFilters()" class="text-xs text-blue-500 hover:underline">重置篩選</button>
+    </div>
+  </div>
+</div>
+
+<!-- News List -->
+<div class="max-w-6xl mx-auto px-4 pb-8">
+  <div id="newsList" class="space-y-3"></div>
+  <div id="emptyState" class="hidden text-center py-12 text-gray-400">
+    <div class="text-4xl mb-2">🔍</div>
+    <div>目前無符合條件的資料</div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+let currentItems = [];
+
+function init() {
+  const today = TODAY;
+  document.getElementById('filterDate').value = today;
+  renderDay(today);
+
+  document.getElementById('filterDate').addEventListener('change', e => renderDay(e.target.value));
+  document.getElementById('filterCat').addEventListener('change', applyFilters);
+  document.getElementById('filterSent').addEventListener('change', applyFilters);
+  document.getElementById('filterPlatform').addEventListener('change', applyFilters);
+}
+
+function renderDay(day) {
+  const dayData = MONITOR_DATA[day];
+  if (!dayData) {
+    document.getElementById('lastUpdate').textContent = `${day} 無資料`;
+    updateStats({total:0, positive:0, negative:0, neutral:0, high_priority:0});
+    currentItems = [];
+    applyFilters();
+    return;
+  }
+  const s = dayData.stats || {};
+  document.getElementById('lastUpdate').textContent = `${day} 更新`;
+  updateStats(s);
+  currentItems = dayData.items || [];
+
+  const high = currentItems.filter(x => x.priority === '高');
+  if (high.length > 0) {
+    document.getElementById('alertBar').classList.remove('hidden');
+    document.getElementById('alertText').textContent =
+      `⚠ 今日有 ${high.length} 則高優先負面輿情需立即處理：${high.slice(0,2).map(x=>x.title).join('、')}`;
+  } else {
+    document.getElementById('alertBar').classList.add('hidden');
+  }
+
+  applyFilters();
+}
+
+function updateStats(s) {
+  document.getElementById('statTotal').textContent = s.total || 0;
+  document.getElementById('statNeg').textContent = s.negative || 0;
+  document.getElementById('statPos').textContent = s.positive || 0;
+  document.getElementById('statHigh').textContent = s.high_priority || 0;
+  document.getElementById('headerNegCount').textContent = s.negative || 0;
+}
+
+function applyFilters() {
+  const cat      = document.getElementById('filterCat').value;
+  const sent     = document.getElementById('filterSent').value;
+  const platform = document.getElementById('filterPlatform').value;
+
+  let filtered = [...currentItems];
+  if (cat)      filtered = filtered.filter(x => x.category === cat);
+  if (sent)     filtered = filtered.filter(x => x.sentiment === sent);
+  if (platform) filtered = filtered.filter(x => x.platform === platform);
+
+  renderList(filtered);
+}
+
+function resetFilters() {
+  document.getElementById('filterCat').value = '';
+  document.getElementById('filterSent').value = '';
+  document.getElementById('filterPlatform').value = '';
+  applyFilters();
+}
+
+function renderList(items) {
+  const container = document.getElementById('newsList');
+  const empty     = document.getElementById('emptyState');
+
+  if (!items.length) {
+    container.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  container.innerHTML = items.map((item, idx) => {
+    const sentClass  = item.sentiment === '負面' ? 'card-negative' :
+                       item.sentiment === '正面' ? 'card-positive' : 'card-neutral';
+    const sentBadge  = item.sentiment === '負面' ? 'badge-negative' :
+                       item.sentiment === '正面' ? 'badge-positive' : 'badge-neutral';
+    const priClass   = item.priority === '高' ? 'badge-high' :
+                       item.priority === '中' ? 'badge-mid' : 'badge-low';
+    const priLabel   = item.priority === '高' ? '🚨 高優先' :
+                       item.priority === '中' ? '⚠ 中' : '低';
+
+    const clarify = item.sentiment === '負面' && item.line_message ? `
+      <div class="clarify-box mt-3">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs font-semibold text-yellow-700">📋 建議澄清文字（可直接複製傳 LINE）</span>
+          <button onclick="copyText('clarify-${idx}')"
+            class="copy-btn text-xs bg-yellow-400 hover:bg-yellow-500 text-white px-2 py-1 rounded">
+            複製
+          </button>
+        </div>
+        <p id="clarify-${idx}" class="text-sm text-gray-700 leading-relaxed">${item.line_message}</p>
+      </div>
+    ` : '';
+
+    const highBg = item.priority === '高' ? 'bg-red-50' : 'bg-white';
+
+    return `
+    <div class="rounded-lg shadow-sm p-4 ${highBg} ${sentClass}">
+      <div class="flex flex-wrap gap-2 mb-2 items-center">
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sentBadge}">${item.sentiment}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${priClass}">${priLabel}</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">${item.category}</span>
+        <span class="text-xs text-gray-400">${item.platform || ''}</span>
+        <span class="text-xs text-gray-400 ml-auto">${item.source || ''}</span>
+      </div>
+      <a href="${item.url}" target="_blank"
+         class="font-semibold text-gray-800 hover:text-blue-600 leading-snug block mb-1">
+        ${item.title}
+      </a>
+      <p class="text-sm text-gray-500 leading-relaxed">${item.summary || item.content?.slice(0,100) || ''}</p>
+      ${clarify}
+      <div class="mt-2 text-xs text-gray-300">${item.reason || ''} · ${item.published?.slice(0,16) || ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function copyText(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+    const btn = el.previousElementSibling?.querySelector('button');
+    if (btn) { btn.textContent = '已複製 ✓'; setTimeout(()=>btn.textContent='複製', 2000); }
+  });
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
