@@ -10,8 +10,8 @@ DOCS_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
 os.makedirs(DOCS_DIR, exist_ok=True)
 TODAY = date.today().isoformat()
 
-# 歸檔用 Google Form URL（填好後取代此處）
-GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScgGGmm1oFMjUq6utQZLgV1wf866AMPfcdY0VvPmGjidZ12TQ/viewform"
+# 歸檔用 Apps Script Web App URL（寫入 Google Sheets）
+SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"
 
 def load_recent_data(days=90):
     all_data = {}
@@ -63,7 +63,7 @@ def main():
         f"const KEYWORD_RANKING = {json.dumps(keyword_ranking, ensure_ascii=False)};\n"
         f"const TOTAL_ALL = {total_all};\n"
         f"const TOTAL_NEG_ALL = {total_neg_all};\n"
-        f"const GOOGLE_FORM_URL = '{GOOGLE_FORM_URL}';\n"
+        f"const SHEETS_API_URL = '{SHEETS_API_URL}';\n"
     )
     with open(os.path.join(DOCS_DIR, "data.js"), "w", encoding="utf-8") as f:
         f.write(data_js)
@@ -437,6 +437,14 @@ function saveCorrections(v){ localStorage.setItem(LS_CORRECTIONS, JSON.stringify
 function saveTracked(v)    { localStorage.setItem(LS_TRACKED, JSON.stringify(v)); }
 function saveWorkflows(v)  { localStorage.setItem(LS_WORKFLOWS, JSON.stringify(v)); }
 
+function showToast(msg) {
+  const d = document.createElement('div');
+  d.textContent = msg;
+  d.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:8px;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);';
+  document.body.appendChild(d);
+  setTimeout(()=>d.remove(), 3000);
+}
+
 /* ══════════════════════════════════════════
    日期工具
 ══════════════════════════════════════════ */
@@ -727,12 +735,29 @@ function archiveToForm(id) {
   const wf = getWorkflows();
   if(!wf[id]) wf[id]={stage:1};
   wf[id].stage = 5;
+  const lineMsg = wf[id].edited_text || item.line_message || '';
   saveWorkflows(wf);
-  // 開啟 Google Form（需設定 GOOGLE_FORM_URL）
-  if (typeof GOOGLE_FORM_URL !== 'undefined' && GOOGLE_FORM_URL && !GOOGLE_FORM_URL.includes('YOUR_FORM_ID')) {
-    window.open(GOOGLE_FORM_URL, '_blank');
-  } else {
-    alert('請先在 build_dashboard.py 設定 GOOGLE_FORM_URL（Google 表單網址）');
+  // 直接寫入 Google Sheets
+  const payload = {
+    date:         item.date || item.published || '',
+    title:        item.title || '',
+    source:       item.source || '',
+    url:          item.url || '',
+    sentiment:    item.sentiment || '負面',
+    category:     item.category || '',
+    line_message: lineMsg
+  };
+  if (typeof SHEETS_API_URL !== 'undefined' && SHEETS_API_URL) {
+    fetch(SHEETS_API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(()=>{
+      showToast('已歸檔至 Google Sheets ✓');
+    }).catch(()=>{
+      showToast('歸檔失敗，請稍後再試');
+    });
   }
   renderClarifyList();
   // 歸檔後從今日負面輿情移除追蹤
