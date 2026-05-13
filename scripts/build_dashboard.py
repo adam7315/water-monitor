@@ -435,6 +435,7 @@ const CAT_GROUPS = {
   '國際水資源新聞': {cats:['國際'],                   icon:'🌍', color:'#4c1d95', grad:'linear-gradient(135deg,#3b0764,#7c3aed)'}
 };
 let activeCatGroup = null;
+let highPriorityOnly = false;
 
 const LS_CORRECTIONS = 'wm_v6_corrections';
 const LS_TRACKED     = 'wm_v6_tracked';
@@ -520,6 +521,7 @@ function init() {
    快速篩選捷徑
 ══════════════════════════════════════════ */
 function filterToday(sent) {
+  highPriorityOnly = false;
   const dates = Object.keys(MONITOR_DATA).sort();
   const latest = dates[dates.length-1]||'';
   document.getElementById('dateFrom').value   = latest;
@@ -612,18 +614,21 @@ function filterHighPriority() {
   document.getElementById('sortBy').value     = 'neg-first';
   document.getElementById('searchBox').value  = '';
   activeCatGroup = null;
+  highPriorityOnly = true;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
   applyFilters();
   document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
 }
 
 function filterBySentiment(sent) {
+  highPriorityOnly = false;
   document.getElementById('sentFilter').value = sent;
   applyFilters();
   document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
 }
 
 function resetHome() {
+  highPriorityOnly = false;
   const dates = Object.keys(MONITOR_DATA).sort();
   const latest = dates[dates.length-1]||'';
   const thirtyBack = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
@@ -702,6 +707,7 @@ function renderCatCircles() {
 }
 
 function selectCat(name, el) {
+  highPriorityOnly = false;
   activeCatGroup = (activeCatGroup===name) ? null : name;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
   if (activeCatGroup && el) el.classList.add('active');
@@ -712,7 +718,7 @@ function selectCat(name, el) {
    今日負面輿情（取代今日緊急預警）
 ══════════════════════════════════════════ */
 function renderTodayNeg(latest) {
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面'&&normalizeDate(x.published||x.date||'')===latest);
+  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面');
   const el = document.getElementById('todayNegList');
   const countEl = document.getElementById('todayNegCount');
   if (!items.length) {
@@ -933,6 +939,7 @@ function applyFilters() {
   }
 
   if (sent) f = f.filter(x=>getSentiment(x)===sent);
+  if (highPriorityOnly) f = f.filter(x=>x.priority==='高');
 
   if (from) f = f.filter(x=>normalizeDate(x.date||x.published||'')>=from);
   if (to)   f = f.filter(x=>normalizeDate(x.date||x.published||'')<=to);
