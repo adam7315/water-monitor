@@ -668,7 +668,7 @@ function renderTodayNeg(latest) {
            class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}${pri}</a>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-400">${item.source||''}</span>
-          <span class="text-xs text-slate-300">${toROC(item.published||item.date)}</span>
+          <span class="text-xs text-slate-300">${toROC(item.date||item.published)}</span>
           <button onclick="todayNegTrack('${id}',${i})"
             id="tdn-btn-${i}"
             class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition ${isTracked?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}">
@@ -954,7 +954,7 @@ function renderNewsList(items) {
       <p class="text-xs text-slate-400 mb-2">${item.content?item.content.slice(0,80)+'…':''}</p>
       ${clarify}
       <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-        <span class="text-xs text-slate-400" title="發布日期">${toROC(item.published||item.date)}</span>
+        <span class="text-xs text-slate-400" title="蒐集日期">${toROC(item.date||item.published)}</span>
         <div class="flex items-center gap-1 ml-auto">
           <span class="text-xs text-slate-400">修正：</span>
           <button class="corr-btn corr-neg ${sent==='負面'?'on':''}" onclick="correct('${id}','負面',${idx})">負面</button>
@@ -1039,7 +1039,7 @@ function showKwModal(kw, items) {
           <div class="flex flex-wrap gap-1.5 mb-1 items-center">
             <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sc}">${s}</span>
             <span class="text-xs text-slate-400">${item.source||''}</span>
-            <span class="text-xs text-slate-300 ml-auto">${normalizeDate(item.published||item.date||'')}</span>
+            <span class="text-xs text-slate-300 ml-auto">${normalizeDate(item.date||item.published||'')}</span>
           </div>
           <a href="${item.url||'#'}" target="_blank" rel="noopener"
              class="link-title text-sm font-medium block leading-snug">${item.title||''}</a>
