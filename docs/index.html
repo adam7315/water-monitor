@@ -289,15 +289,6 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <span class="text-xs text-slate-400" id="pageInfo"></span>
       </div>
 
-      <!-- Today Filter Panel (shown when clicking header today-pos/neg buttons) -->
-      <div id="filterPanel" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3.5">
-        <div class="flex items-center justify-between mb-2.5">
-          <span class="font-bold text-blue-700 text-sm" id="filterPanelTitle"></span>
-          <button onclick="closeFilterPanel()" class="text-slate-400 hover:text-slate-600 text-sm">✕ 關閉</button>
-        </div>
-        <div id="filterPanelList" class="space-y-1.5 max-h-64 overflow-y-auto"></div>
-      </div>
-
       <!-- News List -->
       <div id="newsList" class="space-y-2.5"></div>
       <div id="emptyState" class="hidden text-center py-12 text-slate-400">
@@ -457,55 +448,10 @@ function filterToday(sent) {
   activeCatGroup = null;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
   applyFilters();
-
-  // 顯示今日篩選面板
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>!sent||getSentiment(x)===sent);
-  const panel = document.getElementById('filterPanel');
-  const panelTitle = document.getElementById('filterPanelTitle');
-  const panelList  = document.getElementById('filterPanelList');
-  const label = sent ? `今日${sent}新聞（${items.length} 則）` : `今日所有新聞（${items.length} 則）`;
-  const sc = sent==='負面'?'text-red-600':sent==='正面'?'text-green-600':'text-blue-700';
-  panelTitle.textContent = label;
-  panelTitle.className = `font-bold text-sm ${sc}`;
-  const tracked = getTracked();
-  panelList.innerHTML = items.map((item, i)=>{
-    const id = getItemId(item);
-    const s = getSentiment(item);
-    const neg=s==='負面',pos=s==='正面';
-    const bc = neg?'card-neg':pos?'card-pos':'card-neu';
-    const bg = item.priority==='高'&&neg?'bg-red-50':'';
-    const sc = neg?'bg-red-100 text-red-700':pos?'bg-green-100 text-green-700':'bg-slate-100 text-slate-500';
-    const isTracked = !!tracked[id];
-    return `<div class="news-card p-3.5 border border-slate-100 ${bg} ${bc}" id="fp-${i}">
-      <div class="flex flex-wrap gap-1.5 mb-2 items-center">
-        <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sc}">${s}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">${item.category||''}</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-500">${item.platform||''}</span>
-        ${item.priority==='高'?'<span class="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">高優先</span>':''}
-        <span class="text-xs text-slate-300 ml-auto">${item.source||''}</span>
-      </div>
-      <a href="${item.url||'#'}" target="_blank" rel="noopener"
-         class="link-title font-semibold text-sm block mb-1 leading-snug">${item.title||''}</a>
-      <p class="text-xs text-slate-400 mb-2">${item.content?item.content.slice(0,80)+'…':''}</p>
-      <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-        <span class="text-xs text-slate-400">${toROC(item.published||item.date)}</span>
-        <div class="flex items-center gap-1 ml-auto">
-          <span class="text-xs text-slate-400">修正：</span>
-          <button class="corr-btn corr-neg ${s==='負面'?'on':''}" onclick="fpCorr('${id}','負面',${i})">負面</button>
-          <button class="corr-btn corr-pos ${s==='正面'?'on':''}" onclick="fpCorr('${id}','正面',${i})">正面</button>
-          <button class="corr-btn corr-neu ${s==='中立'?'on':''}" onclick="fpCorr('${id}','中立',${i})">中立</button>
-          <button class="track-btn ml-2 ${isTracked?'on':''}" id="fp-tb-${i}" onclick="fpTrack('${id}',${i})">${isTracked?'✓ 已關注':'+ 關注'}</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('') || '<p class="text-xs text-slate-400 text-center py-4">今日無相關新聞</p>';
-  panel.classList.remove('hidden');
-  panel.scrollIntoView({behavior:'smooth'});
+  document.getElementById('newsList').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function closeFilterPanel() {
-  document.getElementById('filterPanel').classList.add('hidden');
-}
+
 
 function fpCorr(id, newSent, idx) {
   const c = getCorrections();
@@ -564,7 +510,6 @@ function resetHome() {
   document.getElementById('searchBox').value  = '';
   activeCatGroup = null;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
-  document.getElementById('filterPanel').classList.add('hidden');
   applyFilters();
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -643,8 +588,7 @@ function selectCat(name, el) {
    今日負面輿情（取代今日緊急預警）
 ══════════════════════════════════════════ */
 function renderTodayNeg(latest) {
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>
-    getSentiment(x)==='負面' && normalizeDate(x.published||x.date||'')===latest);
+  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面');
   const el = document.getElementById('todayNegList');
   const countEl = document.getElementById('todayNegCount');
   if (!items.length) {
@@ -669,7 +613,7 @@ function renderTodayNeg(latest) {
            class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}${pri}</a>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-400">${item.source||''}</span>
-          <span class="text-xs text-slate-300">${toROC(item.published||item.date)}</span>
+          <span class="text-xs text-slate-300">${toROC(item.date||item.published)}</span>
           <button onclick="todayNegTrack('${id}',${i})"
             id="tdn-btn-${i}"
             class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition ${isTracked?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}">
