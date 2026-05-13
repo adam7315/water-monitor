@@ -11,7 +11,7 @@ os.makedirs(DOCS_DIR, exist_ok=True)
 TODAY = date.today().isoformat()
 
 # 歸檔用 Google Form URL（填好後取代此處）
-GOOGLE_FORM_URL = "https://docs.google.com/forms/d/YOUR_FORM_ID/viewform"
+GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScgGGmm1oFMjUq6utQZLgV1wf866AMPfcdY0VvPmGjidZ12TQ/viewform"
 
 def load_recent_data(days=90):
     all_data = {}
