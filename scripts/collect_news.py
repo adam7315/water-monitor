@@ -92,7 +92,11 @@ def match_keywords(text: str) -> tuple:
 # ── 1. Google News RSS（關鍵字查詢）──────────────────────────
 def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
     q = quote(keyword)
-    url = f"https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+    is_en = all(ord(c) < 128 for c in keyword.replace(' ',''))
+    if is_en:
+        url = f"https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en"
+    else:
+        url = f"https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     items = []
     try:
         feed = feedparser.parse(url)

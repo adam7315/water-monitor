@@ -24,6 +24,9 @@ def main():
     if not items:
         print("無資料可同步"); return
 
+    # 最新的新聞排在最前面
+    items = sorted(items, key=lambda x: x.get("date", x.get("published", "")), reverse=True)
+
     payload = {"type": "daily", "items": items}
     try:
         r = requests.post(SHEETS_API_URL, json=payload, timeout=30)
