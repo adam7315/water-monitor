@@ -126,7 +126,7 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
     <div class="kpi border-t-4 border-red-500" onclick="filterToday('負面')" title="點擊查看今日負面新聞">
       <div class="text-xs text-slate-400 mb-1.5">今日負面</div>
       <div class="knum text-red-600" id="statNeg">-</div>
-      <div class="text-xs text-red-300 mt-1">則需關注 ↗</div>
+      <div class="text-xs text-red-300 mt-1">則（今日蒐集）↗</div>
     </div>
     <div class="kpi border-t-4 border-green-500" onclick="filterToday('正面')" title="點擊查看今日正面新聞">
       <div class="text-xs text-slate-400 mb-1.5">今日正面</div>
@@ -643,7 +643,8 @@ function selectCat(name, el) {
    今日負面輿情（取代今日緊急預警）
 ══════════════════════════════════════════ */
 function renderTodayNeg(latest) {
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面');
+  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>
+    getSentiment(x)==='負面' && normalizeDate(x.published||x.date||'')===latest);
   const el = document.getElementById('todayNegList');
   const countEl = document.getElementById('todayNegCount');
   if (!items.length) {
@@ -668,7 +669,7 @@ function renderTodayNeg(latest) {
            class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}${pri}</a>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-400">${item.source||''}</span>
-          <span class="text-xs text-slate-300">${toROC(item.date||item.published)}</span>
+          <span class="text-xs text-slate-300">${toROC(item.published||item.date)}</span>
           <button onclick="todayNegTrack('${id}',${i})"
             id="tdn-btn-${i}"
             class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition ${isTracked?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}">
@@ -954,7 +955,7 @@ function renderNewsList(items) {
       <p class="text-xs text-slate-400 mb-2">${item.content?item.content.slice(0,80)+'…':''}</p>
       ${clarify}
       <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-        <span class="text-xs text-slate-400" title="蒐集日期">${toROC(item.date||item.published)}</span>
+        <span class="text-xs text-slate-400" title="發布日期">${toROC(item.published||item.date)}</span>
         <div class="flex items-center gap-1 ml-auto">
           <span class="text-xs text-slate-400">修正：</span>
           <button class="corr-btn corr-neg ${sent==='負面'?'on':''}" onclick="correct('${id}','負面',${idx})">負面</button>
