@@ -155,7 +155,7 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <div>
           <div class="text-blue-300 text-xs tracking-widest mb-0.5">114–115年度 臺南海水淡化廠暨南區水資源推廣計畫</div>
           <h1 class="text-xl font-extrabold tracking-tight">輿情監控系統</h1>
-          <div class="text-blue-400 text-xs mt-0.5">🕐 每日 07:00 自動蒐集分析（台灣時間）</div>
+          <div class="text-blue-400 text-xs mt-0.5">🕐 每日 07:00 &amp; 14:00 自動蒐集分析（台灣時間）</div>
         </div>
       </div>
       <div class="flex items-center gap-4 shrink-0 flex-wrap">
@@ -193,21 +193,21 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
   <div class="flex items-center gap-2 mb-2.5">
     <span class="text-xs text-slate-400">最新資料：</span>
     <span class="text-sm font-semibold text-slate-600" id="statsDateLabel">-</span>
-    <span class="text-xs text-slate-300 ml-1">（點擊卡片可篩選當日新聞）</span>
+    <span class="text-xs text-slate-300 ml-1">（點擊卡片可篩選今日新聞）</span>
   </div>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div class="kpi border-t-4 border-blue-400" onclick="filterToday('')" title="點擊查看當日所有新聞">
-      <div class="text-xs text-slate-400 mb-1.5">當日蒐集</div>
+    <div class="kpi border-t-4 border-blue-400" onclick="filterToday('')" title="點擊查看今日所有新聞">
+      <div class="text-xs text-slate-400 mb-1.5">今日蒐集</div>
       <div class="knum text-slate-700" id="statTotal">-</div>
       <div class="text-xs text-slate-400 mt-1">則新聞 ↗</div>
     </div>
-    <div class="kpi border-t-4 border-red-500" onclick="filterToday('負面')" title="點擊查看當日負面新聞">
-      <div class="text-xs text-slate-400 mb-1.5">當日負面</div>
+    <div class="kpi border-t-4 border-red-500" onclick="filterToday('負面')" title="點擊查看今日負面新聞">
+      <div class="text-xs text-slate-400 mb-1.5">今日負面</div>
       <div class="knum text-red-600" id="statNeg">-</div>
       <div class="text-xs text-red-300 mt-1">則需關注 ↗</div>
     </div>
-    <div class="kpi border-t-4 border-green-500" onclick="filterToday('正面')" title="點擊查看當日正面新聞">
-      <div class="text-xs text-slate-400 mb-1.5">當日正面</div>
+    <div class="kpi border-t-4 border-green-500" onclick="filterToday('正面')" title="點擊查看今日正面新聞">
+      <div class="text-xs text-slate-400 mb-1.5">今日正面</div>
       <div class="knum text-green-600" id="statPos">-</div>
       <div class="text-xs text-slate-400 mt-1">則正向報導 ↗</div>
     </div>
@@ -288,17 +288,10 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
           </div>
         </div>
 
-        <!-- 近2週焦點 -->
+        <!-- 關鍵字頻率排行 -->
         <div class="sb-sec">
-          <div class="flex items-center justify-between mb-2.5">
-            <span class="sb-title mb-0">📌 近2週焦點</span>
-            <div class="flex gap-1">
-              <button class="spl-btn on" onclick="setSpotlight('',this)">全部</button>
-              <button class="spl-btn"    onclick="setSpotlight('正面',this)">正面</button>
-              <button class="spl-btn"    onclick="setSpotlight('負面',this)">負面</button>
-            </div>
-          </div>
-          <div id="spotlightList" class="space-y-2.5"></div>
+          <span class="sb-title">🔑 關鍵字頻率（點擊查看全部）</span>
+          <div id="kwRanking" class="space-y-2"></div>
         </div>
 
       </div>
@@ -374,6 +367,15 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <span class="text-xs text-slate-400" id="pageInfo"></span>
       </div>
 
+      <!-- Today Filter Panel (shown when clicking header today-pos/neg buttons) -->
+      <div id="filterPanel" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-3.5">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="font-bold text-blue-700 text-sm" id="filterPanelTitle"></span>
+          <button onclick="closeFilterPanel()" class="text-slate-400 hover:text-slate-600 text-sm">✕ 關閉</button>
+        </div>
+        <div id="filterPanelList" class="space-y-1.5 max-h-64 overflow-y-auto"></div>
+      </div>
+
       <!-- News List -->
       <div id="newsList" class="space-y-2.5"></div>
       <div id="emptyState" class="hidden text-center py-12 text-slate-400">
@@ -392,10 +394,21 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
 <footer class="border-t border-slate-200 bg-white py-3 mt-2">
   <div class="max-w-7xl mx-auto px-5 text-center text-xs text-slate-400 space-x-2">
     <span>114-115年度 臺南海水淡化廠暨南區水資源推廣計畫</span>
-    <span>·</span><span>每日 07:00（台灣時間）自動蒐集分析</span>
+    <span>·</span><span>每日 07:00 &amp; 14:00（台灣時間）自動蒐集分析</span>
     <span>·</span><span>Powered by Google Gemini AI &amp; GitHub Actions</span>
   </div>
 </footer>
+
+<!-- Keyword Articles Modal -->
+<div id="kwModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,.5)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style="max-height:80vh">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+      <h3 class="font-bold text-slate-700" id="kwModalTitle">關鍵字文章</h3>
+      <button onclick="closeKwModal()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+    </div>
+    <div id="kwModalContent" class="p-4 space-y-2 overflow-y-auto"></div>
+  </div>
+</div>
 
 <!-- Workflow Modal -->
 <div id="wfModal" class="hidden fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(0,0,0,.5)">
@@ -500,7 +513,7 @@ function init() {
   document.getElementById('sortBy').value = 'date-desc';
 
   renderCatCircles();
-  renderSpotlight('');
+  renderKwRanking();
   renderTodayNeg(latest);
   renderClarifyList();
   applyFilters();
@@ -520,7 +533,32 @@ function filterToday(sent) {
   activeCatGroup = null;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
   applyFilters();
-  document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
+
+  // 顯示今日篩選面板
+  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>!sent||getSentiment(x)===sent);
+  const panel = document.getElementById('filterPanel');
+  const panelTitle = document.getElementById('filterPanelTitle');
+  const panelList  = document.getElementById('filterPanelList');
+  const label = sent ? `今日${sent}新聞（${items.length} 則）` : `今日所有新聞（${items.length} 則）`;
+  const sc = sent==='負面'?'text-red-600':sent==='正面'?'text-green-600':'text-blue-700';
+  panelTitle.textContent = label;
+  panelTitle.className = `font-bold text-sm ${sc}`;
+  panelList.innerHTML = items.map(item=>{
+    const s = getSentiment(item);
+    const bc = s==='負面'?'border-red-300 bg-red-50':s==='正面'?'border-green-300 bg-green-50':'border-slate-200 bg-white';
+    return `<div class="flex items-start gap-2 p-2 rounded-lg border ${bc}">
+      <span class="text-xs px-1.5 py-0.5 rounded-full font-medium shrink-0 ${s==='負面'?'bg-red-100 text-red-700':s==='正面'?'bg-green-100 text-green-700':'bg-slate-100 text-slate-500'}">${s}</span>
+      <a href="${item.url||'#'}" target="_blank" rel="noopener"
+         class="link-title text-xs font-medium leading-snug flex-1 line-clamp-2">${item.title||''}</a>
+      <span class="text-xs text-slate-400 shrink-0">${item.source||''}</span>
+    </div>`;
+  }).join('') || '<p class="text-xs text-slate-400 text-center py-4">今日無相關新聞</p>';
+  panel.classList.remove('hidden');
+  panel.scrollIntoView({behavior:'smooth'});
+}
+
+function closeFilterPanel() {
+  document.getElementById('filterPanel').classList.add('hidden');
 }
 
 function filterHighPriority() {
@@ -554,6 +592,7 @@ function resetHome() {
   document.getElementById('searchBox').value  = '';
   activeCatGroup = null;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
+  document.getElementById('filterPanel').classList.add('hidden');
   applyFilters();
   window.scrollTo({top:0, behavior:'smooth'});
 }
@@ -655,7 +694,7 @@ function renderTodayNeg(latest) {
            class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}${pri}</a>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-400">${item.source||''}</span>
-          <span class="text-xs text-slate-300">${toROC(item.published)}</span>
+          <span class="text-xs text-slate-300">${toROC(item.date||item.published)}</span>
           <button onclick="todayNegTrack('${id}',${i})"
             id="tdn-btn-${i}"
             class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition ${isTracked?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}">
@@ -987,46 +1026,56 @@ function toggleTrack(id, idx) {
 }
 
 /* ══════════════════════════════════════════
-   近2週焦點（修正日期比較 + 按日期排序）
+   關鍵字頻率排行 + 點擊 Modal
 ══════════════════════════════════════════ */
-function renderSpotlight(filter) {
-  const el=document.getElementById('spotlightList');
-  const cutDate = new Date(Date.now()-14*86400000).toISOString().slice(0,10);
-  let items=[];
-  Object.values(MONITOR_DATA).forEach(d=>{
-    (d.items||[]).forEach(x=>{
-      const nd = normalizeDate(x.published||x.date||'');
-      if(nd >= cutDate) items.push(x);
-    });
-  });
-  // 全部：顯示所有情感；正面/負面：篩選
-  if(filter) items=items.filter(x=>getSentiment(x)===filter);
-  // 按日期新→舊排序
-  items.sort((a,b)=>{
-    const da=normalizeDate(a.published||a.date||'');
-    const db=normalizeDate(b.published||b.date||'');
-    return db>da?1:db<da?-1:0;
-  });
-  if(!items.length){el.innerHTML='<p class="text-xs text-blue-400">近2週暫無資料</p>';return;}
-  el.innerHTML=items.slice(0,10).map(item=>{
-    const s=getSentiment(item);
-    const sc=s==='負面'?'#f87171':s==='正面'?'#4ade80':'#94a3b8';
-    const sbg=s==='負面'?'#3b1d1d':s==='正面'?'#1a3b1a':'#1e2e3b';
-    return `<div style="border-bottom:1px solid #1a2e4a" class="pb-2 last:border-0 last:pb-0">
-      <a href="${item.url||'#'}" target="_blank" rel="noopener"
-         class="text-xs font-medium block leading-snug mb-1 text-blue-100 hover:text-white transition">
-        ${(item.title||'').slice(0,42)}${(item.title?.length||0)>42?'…':''}
-      </a>
-      <div class="flex items-center gap-1.5 text-xs text-blue-300">
-        <span style="background:${sbg};color:${sc}" class="px-1.5 py-0.5 rounded shrink-0">${s}</span>
-        <span class="truncate">${item.source||''}</span>
-        <span class="ml-auto shrink-0">${normalizeDate(item.published||item.date).slice(5)}</span>
+function renderKwRanking() {
+  const el = document.getElementById('kwRanking');
+  if (!el || !KEYWORD_RANKING.length) { if(el) el.innerHTML='<p class="text-xs text-blue-400">暫無資料</p>'; return; }
+  const max = KEYWORD_RANKING[0][1] || 1;
+  el.innerHTML = KEYWORD_RANKING.map(([kw, cnt]) => {
+    const pct = Math.round(cnt / max * 100);
+    return `<div class="sb-clickable py-0.5" onclick="filterByKeyword('${kw.replace(/'/g,"\\'")}')">
+      <div class="flex justify-between text-xs mb-0.5">
+        <span class="text-blue-200 truncate" title="${kw}">${kw}</span>
+        <span class="text-yellow-400 font-bold ml-1 shrink-0">${cnt}</span>
+      </div>
+      <div style="height:4px;background:#1a2e4a;border-radius:2px">
+        <div style="height:4px;width:${pct}%;background:#2d6a9f;border-radius:2px"></div>
       </div>
     </div>`;
   }).join('');
 }
 
-function setSpotlight(f,btn){ document.querySelectorAll('.spl-btn').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); renderSpotlight(f); }
+function filterByKeyword(kw) {
+  const items = allItemsFlat.filter(x => (x.keyword||'') === kw || (x.title||'').includes(kw));
+  showKwModal(kw, items);
+}
+
+function showKwModal(kw, items) {
+  document.getElementById('kwModalTitle').textContent = `「${kw}」共 ${items.length} 則`;
+  const sorted = [...items].sort((a,b)=>
+    (normalizeDate(b.date||b.published||'')>normalizeDate(a.date||a.published||''))?1:-1
+  );
+  document.getElementById('kwModalContent').innerHTML = sorted.length
+    ? sorted.map(item=>{
+        const s=getSentiment(item);
+        const sc=s==='負面'?'bg-red-100 text-red-700':s==='正面'?'bg-green-100 text-green-700':'bg-slate-100 text-slate-500';
+        return `<div class="border border-slate-100 rounded-lg p-2.5 hover:bg-slate-50">
+          <div class="flex flex-wrap gap-1.5 mb-1 items-center">
+            <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sc}">${s}</span>
+            <span class="text-xs text-slate-400">${item.source||''}</span>
+            <span class="text-xs text-slate-300 ml-auto">${normalizeDate(item.date||item.published||'')}</span>
+          </div>
+          <a href="${item.url||'#'}" target="_blank" rel="noopener"
+             class="link-title text-sm font-medium block leading-snug">${item.title||''}</a>
+          ${item.content?`<p class="text-xs text-slate-400 mt-1">${item.content.slice(0,80)}…</p>`:''}
+        </div>`;
+      }).join('')
+    : '<p class="text-center text-slate-400 py-8 text-sm">此關鍵字無相關文章</p>';
+  document.getElementById('kwModal').classList.remove('hidden');
+}
+
+function closeKwModal() { document.getElementById('kwModal').classList.add('hidden'); }
 
 /* ══════════════════════════════════════════
    複製工具
