@@ -1,9 +1,14 @@
 """
 每日新聞與社群媒體蒐集腳本
-來源：Google News RSS、PTT、Google Custom Search (FB/IG/Dcard)
+來源：
+  1. Google News RSS（關鍵字逐一查詢）
+  2. 直接台灣新聞源 RSS（中央社、聯合新聞網）→ 全量掃描關鍵字
+  3. PTT RSS
+  4. Google Custom Search（FB/IG/Dcard）
+  5. NewsData.io API（若設定 API key）
 """
-import json, os, hashlib, re
-from datetime import datetime, date, timedelta
+import json, os, hashlib, time
+from datetime import date
 from urllib.parse import quote
 import feedparser
 import requests
@@ -18,31 +23,25 @@ KEYWORDS = {
         "養殖漁業 將軍", "將軍區 養殖", "七股海水淡化",
         "臺南市 海水淡化", "海淡廠 施工", "海淡廠 工程"
     ],
-    # 南水資源分署轄區直屬設施（嘉義、台南、高雄、屏東）+ 台東水資源管理
+    # 南水資源分署轄區直屬設施（嘉義、台南、高雄、屏東）+ 台東
     "南部水資源": [
-        # 台南設施
         "曾文水庫", "烏山頭水庫", "南化水庫", "白河水庫", "嘉南大圳",
-        # 嘉義設施
         "仁義潭", "蘭潭水庫",
-        # 高雄設施
         "阿公店水庫", "高屏溪攔河堰",
-        # 屏東設施
         "牡丹水庫",
-        # 台東水資源（無直屬設施，由南水資源分署管轄）
         "台東用水", "台東水資源", "台東缺水", "台東水情",
         "卑南大圳", "台東供水",
-        # 供水地區通用
         "嘉南供水", "台南用水", "嘉義用水", "高雄用水",
         "屏東用水", "南部水情", "南部缺水", "南區水資源"
     ],
-    # 水庫相關（南部重點設施）
+    # 全台水資源通用
     "全台水資源": [
         "水情警戒", "限水措施", "水庫蓄水率", "乾旱缺水",
         "水患淹水", "自來水漲價", "供水問題", "水質污染",
         "水庫水位", "豐水期", "枯水期", "缺水危機",
         "曾文蓄水", "南化蓄水", "高雄缺水", "嘉義缺水"
     ],
-    # 國際：以海水淡化為主
+    # 國際海水淡化
     "國際": [
         "desalination plant", "seawater desalination",
         "water desalination technology", "reverse osmosis plant",
@@ -51,31 +50,53 @@ KEYWORDS = {
     ]
 }
 
-PRIORITY = {
-    "海淡廠": 1,
-    "南部水資源": 2,
-    "全台水資源": 3,
-    "國際": 4
-}
+# 所有關鍵字扁平化（用於掃描直接 RSS）
+ALL_KW_FLAT = [(kw, cat) for cat, kws in KEYWORDS.items() for kw in kws]
 
-CSE_API_KEY = os.environ.get("GOOGLE_CSE_API_KEY", "")
-CSE_ID      = os.environ.get("GOOGLE_CSE_ID", "964c6016fea3947d5")
-TODAY       = date.today().isoformat()
-DATA_DIR    = os.path.join(os.path.dirname(__file__), "..", "data")
+PRIORITY = {"海淡廠": 1, "南部水資源": 2, "全台水資源": 3, "國際": 4}
+
+# ── 直接台灣新聞源 RSS（全量掃描，覆蓋率更高）──────────────
+DIRECT_RSS_FEEDS = [
+    # 中央社（官方，最高可信度）
+    {"url": "https://feeds.feedburner.com/rsscna/social",     "source": "中央社", "platform": "新聞"},
+    {"url": "https://feeds.feedburner.com/rsscna/lifehealth", "source": "中央社", "platform": "新聞"},
+    {"url": "https://feeds.feedburner.com/rsscna/finance",    "source": "中央社", "platform": "新聞"},
+    {"url": "https://feeds.feedburner.com/rsscna/local",      "source": "中央社", "platform": "新聞"},
+    # 聯合新聞網
+    {"url": "https://udn.com/rssfeed/news/2/6638?ch=news",    "source": "聯合新聞網", "platform": "新聞"},
+    {"url": "https://udn.com/rssfeed/news/2/BREAKINGNEWS?ch=news", "source": "聯合新聞網", "platform": "新聞"},
+]
+
+CSE_API_KEY      = os.environ.get("GOOGLE_CSE_API_KEY", "")
+CSE_ID           = os.environ.get("GOOGLE_CSE_ID", "964c6016fea3947d5")
+NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")
+TODAY            = date.today().isoformat()
+DATA_DIR         = os.path.join(os.path.dirname(__file__), "..", "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
-seen_hashes = set()
+seen_hashes: set = set()
 
 def dedup_id(title: str, url: str) -> str:
     return hashlib.md5(f"{title}{url}".encode()).hexdigest()
 
+def match_keywords(text: str) -> tuple:
+    """回傳 (category, keyword) 或 (None, None)"""
+    text_lower = text.lower()
+    # 優先級高的分類先比對
+    for cat in ["海淡廠", "南部水資源", "全台水資源", "國際"]:
+        for kw in KEYWORDS[cat]:
+            if kw.lower() in text_lower:
+                return cat, kw
+    return None, None
+
+# ── 1. Google News RSS（關鍵字查詢）──────────────────────────
 def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
     q = quote(keyword)
     url = f"https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     items = []
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:4]:
+        for entry in feed.entries[:5]:
             uid = dedup_id(entry.get("title",""), entry.get("link",""))
             if uid in seen_hashes:
                 continue
@@ -90,18 +111,59 @@ def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
                 "keyword": keyword,
                 "category": category,
                 "priority": priority,
-                "platform": "新聞"
+                "platform": "新聞",
+                "feed_source": "Google News RSS"
             })
     except Exception as e:
-        print(f"  RSS 抓取失敗 [{keyword}]: {e}")
+        print(f"  Google RSS 失敗 [{keyword}]: {e}")
     return items
 
-def fetch_ptt_rss(board: str, category: str) -> list:
+# ── 2. 直接台灣新聞源 RSS（全量掃描）────────────────────────
+def fetch_direct_rss() -> list:
+    items = []
+    for feed_cfg in DIRECT_RSS_FEEDS:
+        try:
+            feed = feedparser.parse(feed_cfg["url"])
+            matched = 0
+            for entry in feed.entries:
+                text = entry.get("title","") + " " + entry.get("summary","")
+                cat, kw = match_keywords(text)
+                if not cat:
+                    continue
+                uid = dedup_id(entry.get("title",""), entry.get("link",""))
+                if uid in seen_hashes:
+                    continue
+                seen_hashes.add(uid)
+                items.append({
+                    "id": uid,
+                    "title": entry.get("title", ""),
+                    "url": entry.get("link", ""),
+                    "source": feed_cfg["source"],
+                    "published": entry.get("published", ""),
+                    "content": entry.get("summary", "")[:500],
+                    "keyword": kw,
+                    "category": cat,
+                    "priority": PRIORITY.get(cat, 3),
+                    "platform": feed_cfg["platform"],
+                    "feed_source": feed_cfg["source"]
+                })
+                matched += 1
+            print(f"  {feed_cfg['source']} ({feed_cfg['url'].split('/')[-1][:20]}): {len(feed.entries)} 則 → {matched} 則相關")
+        except Exception as e:
+            print(f"  直接 RSS 失敗 [{feed_cfg['source']}]: {e}")
+    return items
+
+# ── 3. PTT RSS ───────────────────────────────────────────────
+def fetch_ptt_rss(board: str) -> list:
     url = f"https://www.ptt.cc/bbs/{board}/index.rss"
     items = []
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
+        for entry in feed.entries[:10]:
+            text = entry.get("title","") + " " + entry.get("summary","")
+            cat, kw = match_keywords(text)
+            if not cat:
+                continue
             uid = dedup_id(entry.get("title",""), entry.get("link",""))
             if uid in seen_hashes:
                 continue
@@ -110,46 +172,45 @@ def fetch_ptt_rss(board: str, category: str) -> list:
                 "id": uid,
                 "title": entry.get("title", ""),
                 "url": entry.get("link", ""),
-                "source": f"PTT {board}",
+                "source": f"PTT/{board}",
                 "published": entry.get("published", ""),
                 "content": entry.get("summary", "")[:500],
-                "keyword": board,
-                "category": category,
-                "priority": 2,
-                "platform": "PTT"
+                "keyword": kw,
+                "category": cat,
+                "priority": PRIORITY.get(cat, 3),
+                "platform": "PTT",
+                "feed_source": "PTT"
             })
     except Exception as e:
         print(f"  PTT RSS 失敗 [{board}]: {e}")
     return items
 
+# ── 4. Google CSE（FB / IG / Dcard）────────────────────────
 def fetch_cse(keyword: str, category: str, priority: int, sites: list) -> list:
     if not CSE_API_KEY:
         return []
-    items = []
     site_filter = " OR ".join([f"site:{s}" for s in sites])
-    q = f"{keyword} ({site_filter})"
-    url = "https://www.googleapis.com/customsearch/v1"
     params = {
         "key": CSE_API_KEY,
         "cx": CSE_ID,
-        "q": q,
+        "q": f"{keyword} ({site_filter})",
         "num": 5,
         "dateRestrict": "d1",
         "lr": "lang_zh-TW"
     }
+    items = []
     try:
-        r = requests.get(url, params=params, timeout=10)
-        data = r.json()
-        for item in data.get("items", []):
+        r = requests.get("https://www.googleapis.com/customsearch/v1", params=params, timeout=10)
+        for item in r.json().get("items", []):
             uid = dedup_id(item.get("title",""), item.get("link",""))
             if uid in seen_hashes:
                 continue
             seen_hashes.add(uid)
-            platform = "FB"
             link = item.get("link","")
-            if "instagram" in link: platform = "Instagram"
-            elif "ptt.cc" in link:  platform = "PTT"
-            elif "dcard" in link:   platform = "Dcard"
+            platform = "FB"
+            if "instagram" in link:  platform = "Instagram"
+            elif "ptt.cc" in link:   platform = "PTT"
+            elif "dcard" in link:    platform = "Dcard"
             items.append({
                 "id": uid,
                 "title": item.get("title",""),
@@ -160,54 +221,120 @@ def fetch_cse(keyword: str, category: str, priority: int, sites: list) -> list:
                 "keyword": keyword,
                 "category": category,
                 "priority": priority,
-                "platform": platform
+                "platform": platform,
+                "feed_source": "Google CSE"
             })
     except Exception as e:
-        print(f"  CSE 搜尋失敗 [{keyword}]: {e}")
+        print(f"  CSE 失敗 [{keyword}]: {e}")
     return items
 
+# ── 5. NewsData.io API（可選，需設定 NEWSDATA_API_KEY）────────
+def fetch_newsdata(keyword: str, category: str, priority: int) -> list:
+    if not NEWSDATA_API_KEY:
+        return []
+    items = []
+    try:
+        r = requests.get(
+            "https://newsdata.io/api/1/news",
+            params={
+                "apikey": NEWSDATA_API_KEY,
+                "q": keyword,
+                "country": "tw",
+                "language": "zh",
+                "size": 5
+            },
+            timeout=15
+        )
+        for article in r.json().get("results", []):
+            uid = dedup_id(article.get("title",""), article.get("link",""))
+            if uid in seen_hashes:
+                continue
+            seen_hashes.add(uid)
+            items.append({
+                "id": uid,
+                "title": article.get("title",""),
+                "url": article.get("link",""),
+                "source": article.get("source_id","NewsData"),
+                "published": article.get("pubDate",""),
+                "content": (article.get("description","") or "")[:500],
+                "keyword": keyword,
+                "category": category,
+                "priority": priority,
+                "platform": "新聞",
+                "feed_source": "NewsData.io"
+            })
+    except Exception as e:
+        print(f"  NewsData.io 失敗 [{keyword}]: {e}")
+    return items
+
+# ── 主程式 ───────────────────────────────────────────────────
 def main():
     all_items = []
     print(f"=== 開始蒐集 {TODAY} ===")
 
-    # Google News RSS
+    # 1. Google News RSS（關鍵字查詢）
     for category, keywords in KEYWORDS.items():
         pri = PRIORITY[category]
-        print(f"\n[{category}] 抓取 RSS...")
+        print(f"\n[{category}] Google News RSS...")
         for kw in keywords:
             items = fetch_google_news_rss(kw, category, pri)
-            print(f"  {kw}: {len(items)} 則")
+            if items:
+                print(f"  {kw}: {len(items)} 則")
             all_items.extend(items)
 
-    # PTT
-    print("\n[社群] 抓取 PTT...")
-    for board in ["WaterEngr", "Gossiping", "TW-News"]:
-        items = fetch_ptt_rss(board, "社群輿情")
-        # 過濾相關文章
-        filtered = [i for i in items if any(
-            kw in i["title"] for kws in KEYWORDS.values() for kw in kws
-        )]
-        print(f"  {board}: {len(filtered)} 則相關")
-        all_items.extend(filtered)
+    # 2. 直接台灣新聞源（全量掃描）
+    print(f"\n[直接新聞源] 中央社 / 聯合新聞網...")
+    direct_items = fetch_direct_rss()
+    all_items.extend(direct_items)
+    print(f"  直接新聞源合計：{len(direct_items)} 則相關")
 
-    # Google CSE (FB / IG / Dcard)
+    # 3. PTT
+    print(f"\n[社群] PTT...")
+    for board in ["WaterEngr", "Gossiping", "TW-News"]:
+        items = fetch_ptt_rss(board)
+        print(f"  {board}: {len(items)} 則相關")
+        all_items.extend(items)
+
+    # 4. Google CSE（FB/IG/Dcard）
     if CSE_API_KEY:
-        print("\n[社群] 搜尋 FB/IG/Dcard...")
+        print(f"\n[社群] Google CSE (FB/IG/Dcard)...")
         social_sites = ["facebook.com", "instagram.com", "dcard.tw"]
-        cse_keywords = ["海水淡化廠", "南水資源", "台南缺水", "水庫蓄水"]
-        for kw in cse_keywords:
+        for kw in ["海水淡化廠", "南水資源", "台南缺水", "水庫蓄水"]:
             items = fetch_cse(kw, "社群輿情", 1, social_sites)
             print(f"  {kw}: {len(items)} 則")
             all_items.extend(items)
     else:
         print("\n[社群] 跳過 CSE（未設 API key）")
 
+    # 5. NewsData.io（若設定 key）
+    if NEWSDATA_API_KEY:
+        print(f"\n[NewsData.io] 關鍵字查詢...")
+        nd_keywords = [
+            ("海水淡化", "海淡廠", 1),
+            ("南水資源分署", "海淡廠", 1),
+            ("曾文水庫", "南部水資源", 2),
+            ("台南缺水", "全台水資源", 3),
+        ]
+        for kw, cat, pri in nd_keywords:
+            items = fetch_newsdata(kw, cat, pri)
+            print(f"  {kw}: {len(items)} 則")
+            all_items.extend(items)
+            time.sleep(0.5)
+    else:
+        print("\n[NewsData.io] 跳過（未設 NEWSDATA_API_KEY）")
+
     # 儲存
     out_path = os.path.join(DATA_DIR, f"raw_{TODAY}.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(all_items, f, ensure_ascii=False, indent=2)
 
-    print(f"\n=== 共蒐集 {len(all_items)} 則，儲存至 {out_path} ===")
+    # 來源統計
+    from collections import Counter
+    by_source = Counter(x.get("feed_source","?") for x in all_items)
+    print(f"\n=== 共蒐集 {len(all_items)} 則 ===")
+    for src, cnt in by_source.most_common():
+        print(f"  {src}: {cnt} 則")
+    print(f"儲存至 {out_path}")
 
 if __name__ == "__main__":
     main()
