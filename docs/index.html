@@ -7,15 +7,13 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; }
-/* Sidebar */
 .sidebar { background:#0a1628; }
 .sb-sec  { border-bottom:1px solid #1a2e4a; padding:.875rem 1rem; }
 .sb-sec:last-child { border-bottom:none; }
 .sb-title { color:#7eb4d8; font-size:.72rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; margin-bottom:.625rem; display:block; }
-/* KPI */
-.kpi  { background:white; border-radius:.875rem; padding:.875rem 1.125rem; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+.kpi  { background:white; border-radius:.875rem; padding:.875rem 1.125rem; box-shadow:0 2px 10px rgba(0,0,0,.08); cursor:pointer; transition:box-shadow .15s, transform .1s; }
+.kpi:hover { box-shadow:0 4px 18px rgba(0,0,0,.14); transform:translateY(-1px); }
 .knum { font-size:2.4rem; font-weight:800; line-height:1; letter-spacing:-.03em; }
-/* Cards */
 .card-neg { border-left:4px solid #ef4444; }
 .card-pos { border-left:4px solid #22c55e; }
 .card-neu { border-left:4px solid #cbd5e1; }
@@ -25,22 +23,18 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
 .link-title:hover { color:#1e40af; }
 .line-box  { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:1px solid #86efac; border-radius:.75rem; }
 .urg-card  { background:white; border-radius:.75rem; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.10); }
-/* Donut */
 .don-wrap { display:flex; flex-direction:column; align-items:center; gap:.15rem; cursor:pointer; }
 .don-lbl  { font-size:.62rem; color:#5a85a8; }
-/* Category circles */
+/* Category circles - 固定尺寸 */
 .cat-circle { display:flex; flex-direction:column; align-items:center; cursor:pointer; transition:transform .2s; }
 .cat-circle:hover { transform:translateY(-3px); }
 .cat-circle.active .cat-ring { box-shadow:0 0 0 3px white, 0 0 0 5px #ef4444; }
-.cat-ring { border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-weight:700; transition:box-shadow .2s; }
-.cat-name { font-size:.72rem; font-weight:600; margin-top:.5rem; text-align:center; max-width:80px; line-height:1.3; }
-/* Chip */
+.cat-ring { border-radius:50%; width:96px; height:96px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white; font-weight:700; transition:box-shadow .2s; }
+.cat-name { font-size:.72rem; font-weight:600; margin-top:.5rem; text-align:center; max-width:90px; line-height:1.3; }
 .chip { font-size:.72rem; padding:.25rem .75rem; border-radius:9999px; cursor:pointer; border:1px solid #cbd5e1; color:#64748b; background:white; transition:all .15s; }
 .chip.on { background:#1e5799; border-color:#1e5799; color:white; }
-/* Spotlight filter */
 .spl-btn { font-size:.68rem; padding:.2rem .6rem; border-radius:9999px; cursor:pointer; border:1px solid #243c57; color:#7eb4d8; background:transparent; transition:all .15s; }
 .spl-btn.on { background:#1e5799; border-color:#1e5799; color:white; }
-/* Correction btns */
 .corr-btn { font-size:.65rem; padding:.15rem .5rem; border-radius:9999px; cursor:pointer; border:1px solid; transition:all .15s; }
 .corr-neg { border-color:#fca5a5; color:#dc2626; }
 .corr-neg.on { background:#ef4444; color:white; border-color:#ef4444; }
@@ -50,31 +44,27 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
 .corr-neu.on { background:#94a3b8; color:white; border-color:#94a3b8; }
 .track-btn { font-size:.65rem; padding:.15rem .6rem; border-radius:9999px; cursor:pointer; border:1px solid #93c5fd; color:#2563eb; transition:all .15s; }
 .track-btn.on { background:#2563eb; color:white; border-color:#2563eb; }
-/* Workflow stages */
 .wf-stage { font-size:.65rem; padding:.2rem .5rem; border-radius:.375rem; cursor:pointer; border:1px solid #e2e8f0; background:white; color:#475569; transition:all .15s; white-space:nowrap; }
 .wf-stage.done { background:#1e5799; color:white; border-color:#1e5799; }
 .wf-stage.current { background:#fef3c7; color:#92400e; border-color:#fcd34d; }
-/* Badge */
 .bdg-done { background:#dcfce7; color:#15803d; font-size:.65rem; padding:.15rem .5rem; border-radius:9999px; white-space:nowrap; }
-.bdg-todo { background:#fef3c7; color:#92400e; font-size:.65rem; padding:.15rem .5rem; border-radius:9999px; white-space:nowrap; }
-/* Pagination */
 .pg-btn { padding:.3rem .7rem; border-radius:.5rem; font-size:.8rem; border:1px solid #e2e8f0; background:white; cursor:pointer; transition:all .15s; color:#475569; }
 .pg-btn:hover:not(:disabled) { background:#1e5799; color:white; border-color:#1e5799; }
 .pg-btn.on { background:#1e5799; color:white; border-color:#1e5799; }
 .pg-btn:disabled { opacity:.4; cursor:not-allowed; }
-/* Search btn */
 .search-btn { background:#1e5799; color:white; border:none; border-radius:.5rem; padding:.4rem 1.25rem; font-size:.8rem; cursor:pointer; transition:background .15s; font-weight:600; }
 .search-btn:hover { background:#1a4a8a; }
-/* Misc */
+.home-btn { background:#475569; color:white; border:none; border-radius:.5rem; padding:.4rem 1.25rem; font-size:.8rem; cursor:pointer; transition:background .15s; font-weight:600; }
+.home-btn:hover { background:#334155; }
 .ai-badge { background:linear-gradient(135deg,#667eea,#764ba2); }
 .pulse    { animation:pulse 2s infinite; }
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.bar-fill { transition:width .8s ease; }
-/* Scrollable sidebar */
 .sidebar-scroll { max-height:calc(100vh - 80px); overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#1e3a60 #0a1628; }
 .sidebar-scroll::-webkit-scrollbar { width:4px; }
 .sidebar-scroll::-webkit-scrollbar-track { background:#0a1628; }
 .sidebar-scroll::-webkit-scrollbar-thumb { background:#1e3a60; border-radius:2px; }
+.sb-clickable { cursor:pointer; transition:opacity .15s; }
+.sb-clickable:hover { opacity:.8; }
 @media(max-width:1023px){ .layout-sidebar{ display:none !important; } .layout-main{ grid-template-columns:1fr !important; } }
 </style>
 </head>
@@ -90,26 +80,33 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <div>
           <div class="text-blue-300 text-xs tracking-widest mb-0.5">114–115年度 臺南海水淡化廠暨南區水資源推廣計畫</div>
           <h1 class="text-xl font-extrabold tracking-tight">輿情監控系統</h1>
-          <div class="text-blue-400 text-xs mt-0.5">🕐 每日 07:00 自動蒐集分析</div>
+          <div class="text-blue-400 text-xs mt-0.5">🕐 每日 07:00 自動蒐集分析（台灣時間）</div>
         </div>
       </div>
-      <div class="flex items-center gap-6 shrink-0 flex-wrap">
+      <div class="flex items-center gap-4 shrink-0 flex-wrap">
         <div class="text-center">
           <div class="text-blue-300 text-xs mb-0.5">最新資料</div>
           <div class="text-white font-bold text-base" id="latestDateDisplay">-</div>
         </div>
-        <div class="text-center">
+        <div class="text-center sb-clickable" onclick="filterToday('正面')">
           <div class="text-xs text-blue-300 mb-0.5">今日正面</div>
           <div class="text-2xl font-bold text-green-300" id="hdrPos">-</div>
-          <div class="text-xs text-blue-300">則</div>
+          <div class="text-xs text-blue-300">則 ↗</div>
         </div>
-        <div class="text-center">
+        <div class="text-center sb-clickable" onclick="filterToday('負面')">
           <div class="text-xs text-blue-300 mb-0.5">今日負面</div>
           <div class="text-2xl font-bold text-red-300" id="hdrNeg">-</div>
-          <div class="text-xs text-blue-300">則</div>
+          <div class="text-xs text-blue-300">則 ↗</div>
         </div>
-        <div class="ai-badge text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow">
-          <span class="pulse w-1.5 h-1.5 bg-white rounded-full"></span>🤖 AI 自動分析
+        <div class="flex flex-col gap-1.5">
+          <div class="ai-badge text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow">
+            <span class="pulse w-1.5 h-1.5 bg-white rounded-full"></span>🤖 AI 自動分析
+          </div>
+          <a href="https://github.com/adam7315/water-monitor/actions/workflows/daily_monitor.yml"
+             target="_blank" rel="noopener"
+             class="text-xs bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5 shadow text-center justify-center transition">
+            ⚡ 立即蒐集
+          </a>
         </div>
       </div>
     </div>
@@ -121,49 +118,50 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
   <div class="flex items-center gap-2 mb-2.5">
     <span class="text-xs text-slate-400">最新資料：</span>
     <span class="text-sm font-semibold text-slate-600" id="statsDateLabel">-</span>
-    <span class="text-xs text-slate-300 ml-1">（以新聞發布日期為準）</span>
+    <span class="text-xs text-slate-300 ml-1">（點擊卡片可篩選當日新聞）</span>
   </div>
   <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-    <div class="kpi border-t-4 border-blue-400">
+    <div class="kpi border-t-4 border-blue-400" onclick="filterToday('')" title="點擊查看當日所有新聞">
       <div class="text-xs text-slate-400 mb-1.5">當日蒐集</div>
       <div class="knum text-slate-700" id="statTotal">-</div>
-      <div class="text-xs text-slate-400 mt-1">則新聞</div>
+      <div class="text-xs text-slate-400 mt-1">則新聞 ↗</div>
     </div>
-    <div class="kpi border-t-4 border-red-500">
+    <div class="kpi border-t-4 border-red-500" onclick="filterToday('負面')" title="點擊查看當日負面新聞">
       <div class="text-xs text-slate-400 mb-1.5">當日負面</div>
       <div class="knum text-red-600" id="statNeg">-</div>
-      <div class="text-xs text-red-300 mt-1">則需關注</div>
+      <div class="text-xs text-red-300 mt-1">則需關注 ↗</div>
     </div>
-    <div class="kpi border-t-4 border-green-500">
+    <div class="kpi border-t-4 border-green-500" onclick="filterToday('正面')" title="點擊查看當日正面新聞">
       <div class="text-xs text-slate-400 mb-1.5">當日正面</div>
       <div class="knum text-green-600" id="statPos">-</div>
-      <div class="text-xs text-slate-400 mt-1">則正向報導</div>
+      <div class="text-xs text-slate-400 mt-1">則正向報導 ↗</div>
     </div>
-    <div class="kpi border-t-4 border-orange-500">
+    <div class="kpi border-t-4 border-orange-500" onclick="filterHighPriority()" title="點擊查看高優先負面新聞">
       <div class="text-xs text-slate-400 mb-1.5">高優先</div>
       <div class="knum text-orange-500" id="statHigh">-</div>
-      <div class="text-xs text-orange-300 mt-1">則待立即處理</div>
+      <div class="text-xs text-orange-300 mt-1">則待立即處理 ↗</div>
     </div>
   </div>
 </div>
 
-<!-- ── Middle: Urgent + Clarify ── -->
+<!-- ── Today Negative + Clarify ── -->
 <div class="max-w-7xl mx-auto px-5 pb-3">
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
 
-    <!-- 今日緊急預警 -->
+    <!-- 今日負面輿情 -->
     <div class="lg:col-span-2 bg-gradient-to-br from-red-50 to-orange-50 border border-red-200 rounded-xl p-3.5">
       <div class="flex items-center justify-between mb-3">
         <div class="flex items-center gap-2">
-          <span class="text-lg">🚨</span>
-          <span class="font-bold text-red-700 text-sm">今日緊急預警</span>
+          <span class="text-lg">📢</span>
+          <span class="font-bold text-red-700 text-sm">今日負面輿情</span>
+          <span class="text-xs text-red-400 bg-red-100 px-1.5 py-0.5 rounded-full" id="todayNegCount"></span>
         </div>
-        <span class="text-xs text-red-400 font-medium" id="urgentCount"></span>
+        <span class="text-xs text-slate-400">點「關注」加入追蹤</span>
       </div>
-      <div id="urgentList" class="space-y-2.5"></div>
-      <div id="urgentEmpty" class="hidden text-center py-6">
+      <div id="todayNegList" class="space-y-2"></div>
+      <div id="todayNegEmpty" class="hidden text-center py-6">
         <div class="text-3xl mb-2">✅</div>
-        <div class="text-green-600 text-xs font-medium">今日無高優先負面輿情</div>
+        <div class="text-green-600 text-xs font-medium">今日無負面輿情</div>
       </div>
     </div>
 
@@ -177,13 +175,13 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         </div>
         <button onclick="exportCSV()"
           class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg font-medium transition flex items-center gap-1">
-          ⬇ Excel 歸檔
+          📊 匯出 Excel
         </button>
       </div>
       <div id="clarifyList" class="p-2 space-y-2 max-h-64 overflow-y-auto"></div>
       <div id="clarifyEmpty" class="hidden text-center py-6 text-slate-400">
         <div class="text-2xl mb-1">📭</div>
-        <div class="text-xs">尚無追蹤中的輿情<br>在新聞列表點擊「追蹤」即可加入</div>
+        <div class="text-xs">尚無追蹤中的輿情<br>在今日負面輿情或新聞列表點「關注」即可加入</div>
       </div>
     </div>
 
@@ -198,16 +196,18 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
     <aside class="layout-sidebar sidebar rounded-xl shadow-xl" style="position:sticky;top:12px">
       <div class="sidebar-scroll">
 
-        <!-- 輿情分析 -->
+        <!-- 輿情分析（對應日期範圍） -->
         <div class="sb-sec">
-          <span class="sb-title">📊 近30天輿情分析</span>
+          <span class="sb-title">📊 輿情分析（依搜尋範圍）</span>
           <div class="text-xs text-blue-400 mb-2 text-center" id="donutCatLabel">全部分類</div>
           <div class="flex justify-around items-center py-1.5" id="sentimentDonuts"></div>
           <div class="mt-3 grid grid-cols-2 gap-1.5 text-xs">
-            <div class="text-center py-1 rounded" style="background:#1a2e4a;color:#7eb4d8">
+            <div class="text-center py-1 rounded sb-clickable" style="background:#1a2e4a;color:#7eb4d8"
+                 onclick="filterBySentiment('正面')">
               正面 <span class="font-bold text-green-400" id="donutPos">-</span> 則
             </div>
-            <div class="text-center py-1 rounded" style="background:#1a2e4a;color:#7eb4d8">
+            <div class="text-center py-1 rounded sb-clickable" style="background:#1a2e4a;color:#7eb4d8"
+                 onclick="filterBySentiment('負面')">
               負面 <span class="font-bold text-red-400" id="donutNeg">-</span> 則
             </div>
           </div>
@@ -234,11 +234,10 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
 
       <!-- 4 Category Circles -->
       <div class="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-slate-700 text-sm">📂 分類總覽</h3>
-          <button onclick="selectCat(null,null)" class="text-xs text-blue-400 hover:text-blue-600">顯示全部</button>
+        <div class="mb-4">
+          <h3 class="font-bold text-slate-700 text-sm">📂 分類總覽（點擊篩選）</h3>
         </div>
-        <div class="flex justify-around items-start gap-2" id="catCircles"></div>
+        <div class="flex justify-around items-start gap-2 flex-wrap" id="catCircles"></div>
       </div>
 
       <!-- Filters -->
@@ -271,8 +270,8 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
             <div class="text-xs text-slate-400 mb-1.5">排序</div>
             <select id="sortBy"
               class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none">
-              <option value="neg-first">負面優先</option>
               <option value="date-desc">日期新→舊</option>
+              <option value="neg-first">負面優先</option>
               <option value="date-asc">日期舊→新</option>
               <option value="tracked">澄清追蹤</option>
             </select>
@@ -283,8 +282,9 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
             <input type="text" id="searchBox" placeholder="輸入關鍵字…"
               class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-blue-300">
           </div>
-          <!-- Search button -->
+          <!-- Buttons -->
           <button class="search-btn" onclick="applyFilters()">🔍 搜尋</button>
+          <button class="home-btn" onclick="resetHome()">🏠 首頁</button>
         </div>
       </div>
 
@@ -292,8 +292,8 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
       <div class="flex justify-between items-center px-1">
         <div class="text-sm text-slate-500">
           共 <strong id="showCount">0</strong> 則
-          <span class="ml-2 text-red-500">負面 <strong id="showNeg">0</strong></span>
-          <span class="ml-1.5 text-green-500">正面 <strong id="showPos">0</strong></span>
+          <span class="ml-2 text-red-500 sb-clickable" onclick="filterBySentiment('負面')">負面 <strong id="showNeg">0</strong> ↗</span>
+          <span class="ml-1.5 text-green-500 sb-clickable" onclick="filterBySentiment('正面')">正面 <strong id="showPos">0</strong> ↗</span>
           <span class="ml-1.5 text-slate-400">中立 <strong id="showNeu">0</strong></span>
         </div>
         <span class="text-xs text-slate-400" id="pageInfo"></span>
@@ -343,19 +343,17 @@ let filteredItems = [];
 let currentPage = 1;
 const PAGE_SIZE = 30;
 
-// 4 分類對應
 const CAT_GROUPS = {
-  '南水資源分署':   {cats:['南部水資源','社群輿情'], color:'#1e5799', grad:'linear-gradient(135deg,#1a3a6c,#2d6a9f)'},
-  '台南海水淡化廠': {cats:['海淡廠'],                color:'#065f46', grad:'linear-gradient(135deg,#064e3b,#059669)'},
-  '水庫相關新聞':   {cats:['全台水資源'],             color:'#92400e', grad:'linear-gradient(135deg,#78350f,#d97706)'},
-  '國際水資源新聞': {cats:['國際'],                   color:'#4c1d95', grad:'linear-gradient(135deg,#3b0764,#7c3aed)'}
+  '台南海水淡化廠': {cats:['海淡廠'],                icon:'🏭', color:'#065f46', grad:'linear-gradient(135deg,#064e3b,#059669)'},
+  '南水資源分署':   {cats:['南部水資源','社群輿情'], icon:'💧', color:'#1e5799', grad:'linear-gradient(135deg,#1a3a6c,#2d6a9f)'},
+  '水庫相關新聞':   {cats:['全台水資源'],             icon:'🏔', color:'#92400e', grad:'linear-gradient(135deg,#78350f,#d97706)'},
+  '國際水資源新聞': {cats:['國際'],                   icon:'🌍', color:'#4c1d95', grad:'linear-gradient(135deg,#3b0764,#7c3aed)'}
 };
-let activeCatGroup = null; // null = 全部
+let activeCatGroup = null;
 
-// localStorage keys
-const LS_CORRECTIONS = 'wm_v5_corrections';
-const LS_TRACKED     = 'wm_v5_tracked';
-const LS_WORKFLOWS   = 'wm_v5_workflows';
+const LS_CORRECTIONS = 'wm_v6_corrections';
+const LS_TRACKED     = 'wm_v6_tracked';
+const LS_WORKFLOWS   = 'wm_v6_workflows';
 
 function getCorrections(){ return JSON.parse(localStorage.getItem(LS_CORRECTIONS)||'{}'); }
 function getTracked()    { return JSON.parse(localStorage.getItem(LS_TRACKED)||'{}'); }
@@ -365,16 +363,25 @@ function saveTracked(v)    { localStorage.setItem(LS_TRACKED, JSON.stringify(v))
 function saveWorkflows(v)  { localStorage.setItem(LS_WORKFLOWS, JSON.stringify(v)); }
 
 /* ══════════════════════════════════════════
-   ROC 日期 & 工具
+   日期工具
 ══════════════════════════════════════════ */
+function normalizeDate(s) {
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  try { const d = new Date(s); if (!isNaN(d)) return d.toISOString().slice(0,10); } catch(e) {}
+  return '';
+}
+
 function toROC(s) {
   if (!s) return '';
-  const d = new Date(s);
-  if (!isNaN(d)) return `民國${d.getFullYear()-1911}年${d.getMonth()+1}月${d.getDate()}日`;
-  const d2 = new Date(s.slice(0,10));
-  if (!isNaN(d2)) return `民國${d2.getFullYear()-1911}年${d2.getMonth()+1}月${d2.getDate()}日`;
+  const iso = normalizeDate(s);
+  if (iso) {
+    const d = new Date(iso+'T00:00:00');
+    return `民國${d.getFullYear()-1911}年${d.getMonth()+1}月${d.getDate()}日`;
+  }
   return s.slice(0,10);
 }
+
 function getItemId(item){ return item.id || (item.title||'')+(item.published||''); }
 function getSentiment(item){ const c=getCorrections(); return c[getItemId(item)]||item.sentiment||'中立'; }
 
@@ -400,37 +407,95 @@ function init() {
   allItemsFlat = [];
   Object.values(MONITOR_DATA).forEach(d=>{ allItemsFlat=allItemsFlat.concat(d.items||[]); });
 
+  // 預設日期範圍：近30天
   if (dates.length) {
-    document.getElementById('dateFrom').value = dates[Math.max(0,dates.length-14)];
+    const thirtyBack = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+    document.getElementById('dateFrom').value = thirtyBack < dates[0] ? dates[0] : thirtyBack;
     document.getElementById('dateTo').value   = latest;
   }
+  // 預設排序：日期新→舊
+  document.getElementById('sortBy').value = 'date-desc';
 
-  renderDonut(null);
   renderCatCircles();
   renderSpotlight('');
-  renderUrgent(latest);
+  renderTodayNeg(latest);
   renderClarifyList();
   applyFilters();
 }
 
 /* ══════════════════════════════════════════
-   輿情分析圓環（動態）
+   快速篩選捷徑
+══════════════════════════════════════════ */
+function filterToday(sent) {
+  const dates = Object.keys(MONITOR_DATA).sort();
+  const latest = dates[dates.length-1]||'';
+  document.getElementById('dateFrom').value   = latest;
+  document.getElementById('dateTo').value     = latest;
+  document.getElementById('sentFilter').value = sent;
+  document.getElementById('sortBy').value     = 'date-desc';
+  document.getElementById('searchBox').value  = '';
+  activeCatGroup = null;
+  document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
+  applyFilters();
+  document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
+}
+
+function filterHighPriority() {
+  const dates = Object.keys(MONITOR_DATA).sort();
+  const latest = dates[dates.length-1]||'';
+  document.getElementById('dateFrom').value   = latest;
+  document.getElementById('dateTo').value     = latest;
+  document.getElementById('sentFilter').value = '負面';
+  document.getElementById('sortBy').value     = 'neg-first';
+  document.getElementById('searchBox').value  = '';
+  activeCatGroup = null;
+  document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
+  applyFilters();
+  document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
+}
+
+function filterBySentiment(sent) {
+  document.getElementById('sentFilter').value = sent;
+  applyFilters();
+  document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
+}
+
+function resetHome() {
+  const dates = Object.keys(MONITOR_DATA).sort();
+  const latest = dates[dates.length-1]||'';
+  const thirtyBack = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+  document.getElementById('dateFrom').value   = thirtyBack < dates[0] ? dates[0] : thirtyBack;
+  document.getElementById('dateTo').value     = latest;
+  document.getElementById('sentFilter').value = '';
+  document.getElementById('sortBy').value     = 'date-desc';
+  document.getElementById('searchBox').value  = '';
+  activeCatGroup = null;
+  document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
+  applyFilters();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ══════════════════════════════════════════
+   輿情分析圓環（對應日期範圍）
 ══════════════════════════════════════════ */
 function renderDonut(groupName) {
   const el = document.getElementById('sentimentDonuts');
   document.getElementById('donutCatLabel').textContent = groupName||'全部分類';
+  const from = document.getElementById('dateFrom')?.value||'';
+  const to   = document.getElementById('dateTo')?.value||'';
   let pos=0,neg=0,neu=0;
   const cats = groupName ? CAT_GROUPS[groupName].cats : null;
-  Object.values(MONITOR_DATA).forEach(d=>{
-    (d.items||[]).forEach(x=>{
-      if (cats && !cats.includes(x.category||'')) return;
-      const s = getSentiment(x);
-      if (s==='正面') pos++; else if (s==='負面') neg++; else neu++;
-    });
+  allItemsFlat.forEach(x=>{
+    if (cats && !cats.includes(x.category||'')) return;
+    const nd = normalizeDate(x.published||x.date||'');
+    if (from && nd < from) return;
+    if (to   && nd > to)   return;
+    const s = getSentiment(x);
+    if (s==='正面') pos++; else if (s==='負面') neg++; else neu++;
   });
-  const t=pos+neg+neu||1, pn=Math.round(neg/t*100), pu=Math.round(neu/t*100), pp=100-pn-pu;
   document.getElementById('donutPos').textContent = pos;
   document.getElementById('donutNeg').textContent = neg;
+  const t=pos+neg+neu||1, pn=Math.round(neg/t*100), pu=Math.round(neu/t*100), pp=100-pn-pu;
   const mksvg=(pct,clr,lbl)=>{
     const r=15.9,c=+(2*Math.PI*r).toFixed(2),d=+(pct/100*c).toFixed(2),g=+(c-d).toFixed(2);
     return `<div class="don-wrap">
@@ -448,27 +513,23 @@ function renderDonut(groupName) {
 }
 
 /* ══════════════════════════════════════════
-   4 分類圓圈
+   4 分類圓圈（固定尺寸）
 ══════════════════════════════════════════ */
 function renderCatCircles() {
   const el = document.getElementById('catCircles');
-  // 計算每個分類的文章數
   const counts = {};
   Object.keys(CAT_GROUPS).forEach(g=>{
     const cats = CAT_GROUPS[g].cats;
     counts[g] = allItemsFlat.filter(x=>cats.includes(x.category||'')).length;
   });
-  const maxCount = Math.max(...Object.values(counts), 1);
 
   el.innerHTML = Object.entries(CAT_GROUPS).map(([name, cfg])=>{
     const count = counts[name]||0;
-    const ratio = count/maxCount;
-    const sz = Math.round(80 + ratio * 50); // 80–130px
-    const fs = Math.round(sz/6.5);
-    return `<div class="cat-circle" id="cc-${name}" onclick="selectCat('${name}',this)">
-      <div class="cat-ring" style="width:${sz}px;height:${sz}px;background:${cfg.grad}">
-        <div style="font-size:${fs+4}px;font-weight:900">${count}</div>
-        <div style="font-size:${Math.max(10,fs-2)}px;opacity:.85">則</div>
+    return `<div class="cat-circle" id="cc-${name.replace(/\s/g,'_')}" onclick="selectCat('${name}',this)">
+      <div class="cat-ring" style="background:${cfg.grad}">
+        <div style="font-size:1.5rem;line-height:1">${cfg.icon}</div>
+        <div style="font-size:1.15rem;font-weight:900;line-height:1.1">${count}</div>
+        <div style="font-size:.72rem;opacity:.85">則</div>
       </div>
       <div class="cat-name text-slate-600 font-semibold">${name}</div>
     </div>`;
@@ -476,47 +537,65 @@ function renderCatCircles() {
 }
 
 function selectCat(name, el) {
-  activeCatGroup = name;
+  activeCatGroup = (activeCatGroup===name) ? null : name;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
-  if (el) el.classList.add('active');
-  renderDonut(name);
+  if (activeCatGroup && el) el.classList.add('active');
   applyFilters();
 }
 
 /* ══════════════════════════════════════════
-   今日緊急預警
+   今日負面輿情（取代今日緊急預警）
 ══════════════════════════════════════════ */
-function renderUrgent(latest) {
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>x.priority==='高'&&getSentiment(x)==='負面');
-  const el = document.getElementById('urgentList');
+function renderTodayNeg(latest) {
+  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面');
+  const el = document.getElementById('todayNegList');
+  const countEl = document.getElementById('todayNegCount');
   if (!items.length) {
-    el.classList.add('hidden');
-    document.getElementById('urgentEmpty').classList.remove('hidden'); return;
+    el.innerHTML='';
+    document.getElementById('todayNegEmpty').classList.remove('hidden'); return;
   }
-  document.getElementById('urgentCount').textContent = '共 '+items.length+' 則';
-  el.classList.remove('hidden');
-  document.getElementById('urgentEmpty').classList.add('hidden');
-  el.innerHTML = items.slice(0,4).map((item,i)=>{
+  document.getElementById('todayNegEmpty').classList.add('hidden');
+  countEl.textContent = items.length+'則';
+  const tracked = getTracked();
+  el.innerHTML = items.map((item,i)=>{
+    const id = getItemId(item);
     let domain='';
     try{ domain = new URL(item.url||'').hostname; }catch(e){}
-    const favicon = domain ? `https://www.google.com/s2/favicons?sz=64&domain=${domain}` : '';
-    return `<div class="urg-card flex gap-0 overflow-hidden">
-      ${favicon?`<div style="width:56px;min-width:56px;background:linear-gradient(135deg,#1a3a6c,#1e5799);display:flex;align-items:center;justify-content:center;padding:.5rem">
-        <img src="${favicon}" class="w-8 h-8 rounded" onerror="this.style.display='none'">
-      </div>`:''}
-      <div class="flex-1 p-2.5 min-w-0">
+    const isTracked = !!tracked[id];
+    const pri = item.priority==='高' ? '<span class="text-xs bg-red-200 text-red-700 px-1.5 py-0.5 rounded-full ml-1">高優先</span>' : '';
+    return `<div class="urg-card flex gap-0 overflow-hidden" id="tdn-${i}">
+      <div style="width:44px;min-width:44px;background:linear-gradient(135deg,#7f1d1d,#dc2626);display:flex;align-items:center;justify-content:center">
+        ${domain ? `<img src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" class="w-6 h-6 rounded" onerror="this.style.display='none'">` : '<span class="text-white text-xs">📰</span>'}
+      </div>
+      <div class="flex-1 p-2 min-w-0">
         <a href="${item.url||'#'}" target="_blank" rel="noopener"
-           class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}</a>
-        <div class="flex items-center gap-2 text-xs text-slate-400">
-          <span>${item.source||''}</span>
-          <span>${toROC(item.published)}</span>
-          ${item.line_message?`<button onclick="cpUrgent('ul-${i}',this)"
-            class="ml-auto text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-medium">📋</button>`:''}
+           class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}${pri}</a>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs text-slate-400">${item.source||''}</span>
+          <span class="text-xs text-slate-300">${toROC(item.published)}</span>
+          <button onclick="todayNegTrack('${id}',${i})"
+            id="tdn-btn-${i}"
+            class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition ${isTracked?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}">
+            ${isTracked?'✓ 已關注':'+ 關注'}
+          </button>
+          ${item.line_message?`<button onclick="cpText('tdnmsg-${i}',this)" class="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full font-medium">📋 LINE</button>`:''}
         </div>
       </div>
-      ${item.line_message?`<p id="ul-${i}" class="hidden">${item.line_message}</p>`:''}
+      ${item.line_message?`<p id="tdnmsg-${i}" class="hidden">${item.line_message}</p>`:''}
     </div>`;
   }).join('');
+}
+
+function todayNegTrack(id, idx) {
+  const t=getTracked();
+  t[id]=!t[id]; if(!t[id]) delete t[id];
+  saveTracked(t);
+  const btn=document.getElementById('tdn-btn-'+idx);
+  if(btn){
+    btn.textContent=t[id]?'✓ 已關注':'+ 關注';
+    btn.className='ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition '+(t[id]?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50');
+  }
+  renderClarifyList();
 }
 
 /* ══════════════════════════════════════════
@@ -561,10 +640,30 @@ function wfAction(id, stage) {
   const wf = getWorkflows();
   if (!wf[id]) wf[id] = {stage:1};
   if (stage === 2) { openModal(id); return; }
-  if (stage === 5) { exportSingleCSV(id); return; }
+  if (stage === 5) { archiveToForm(id); return; }
   wf[id].stage = Math.max(wf[id].stage||1, stage);
   saveWorkflows(wf);
   renderClarifyList();
+}
+
+function archiveToForm(id) {
+  const item = allItemsFlat.find(x=>getItemId(x)===id);
+  if (!item) return;
+  const wf = getWorkflows();
+  if(!wf[id]) wf[id]={stage:1};
+  wf[id].stage = 5;
+  saveWorkflows(wf);
+  // 開啟 Google Form（需設定 GOOGLE_FORM_URL）
+  if (typeof GOOGLE_FORM_URL !== 'undefined' && GOOGLE_FORM_URL && !GOOGLE_FORM_URL.includes('YOUR_FORM_ID')) {
+    window.open(GOOGLE_FORM_URL, '_blank');
+  } else {
+    alert('請先在 build_dashboard.py 設定 GOOGLE_FORM_URL（Google 表單網址）');
+  }
+  renderClarifyList();
+  // 歸檔後從今日負面輿情移除追蹤
+  const t=getTracked(); delete t[id]; saveTracked(t);
+  const dates = Object.keys(MONITOR_DATA).sort();
+  renderTodayNeg(dates[dates.length-1]||'');
 }
 
 function untrack(id) {
@@ -586,8 +685,7 @@ function openModal(id) {
     <div class="mb-4">
       <div class="text-xs text-slate-400 mb-1">AI 澄清文稿（可手動修正）</div>
       <textarea id="wfTextarea" rows="6"
-        class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-        placeholder="輸入或修正澄清文稿…">${text}</textarea>
+        class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">${text}</textarea>
     </div>
     <div class="flex gap-2 justify-end">
       <button onclick="closeModal()" class="text-xs border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50">取消</button>
@@ -621,24 +719,11 @@ function exportCSV() {
   const rows = items.map(item=>{
     const id=getItemId(item), w=wf[id]||{};
     return [toROC(item.published),item.title||'',item.source||'',item.url||'',
-      getSentiment(item), stages[w.stage||1]||'', w.edited_text||item.line_message||'']
+      getSentiment(item), item.category||'', stages[w.stage||1]||'', w.edited_text||item.line_message||'']
       .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
   });
-  const csv='日期,標題,來源,網址,情感,進度,澄清文字\n'+rows.join('\n');
+  const csv='日期,標題,來源,網址,情感,分類,進度,澄清文字\n'+rows.join('\n');
   dlFile('﻿'+csv,'輿情追蹤_'+TODAY+'.csv','text/csv;charset=utf-8');
-}
-
-function exportSingleCSV(id) {
-  const item = allItemsFlat.find(x=>getItemId(x)===id);
-  if (!item) return;
-  const wf = getWorkflows()[id]||{};
-  const stages=['','AI文稿','人工修正','長官同意','確認發布','歸檔'];
-  const row=[toROC(item.published),item.title||'',item.source||'',item.url||'',
-    getSentiment(item),stages[wf.stage||1]||'',wf.edited_text||item.line_message||'']
-    .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',');
-  dlFile('﻿日期,標題,來源,網址,情感,進度,澄清文字\n'+row,'輿情_'+id.slice(0,8)+'.csv','text/csv;charset=utf-8');
-  const w=getWorkflows(); if(!w[id])w[id]={};w[id].stage=Math.max(w[id].stage||1,5);
-  saveWorkflows(w); renderClarifyList();
 }
 
 function dlFile(content, name, type) {
@@ -648,7 +733,7 @@ function dlFile(content, name, type) {
 }
 
 /* ══════════════════════════════════════════
-   篩選（搜尋按鈕觸發）
+   篩選
 ══════════════════════════════════════════ */
 function applyFilters() {
   const sent   = document.getElementById('sentFilter').value;
@@ -660,26 +745,21 @@ function applyFilters() {
 
   let f = [...allItemsFlat];
 
-  // 4 分類篩選
   if (activeCatGroup) {
     const cats = CAT_GROUPS[activeCatGroup].cats;
     f = f.filter(x=>cats.includes(x.category||''));
   }
 
-  // 情感（含人工修正）
   if (sent) f = f.filter(x=>getSentiment(x)===sent);
 
-  // 日期範圍
-  if (from) f = f.filter(x=>(x.published||x.date||'')>=from);
-  if (to)   f = f.filter(x=>(x.published||x.date||'').slice(0,10)<=to);
+  if (from) f = f.filter(x=>normalizeDate(x.published||x.date||'')>=from);
+  if (to)   f = f.filter(x=>normalizeDate(x.published||x.date||'')<=to);
 
-  // 關鍵字
   if (kw) f = f.filter(x=>(x.title||'').toLowerCase().includes(kw)||(x.keyword||'').toLowerCase().includes(kw));
 
-  // 排序
   const so={'負面':0,'中立':1,'正面':2}, po={'高':0,'中':1,'低':2};
-  if      (sortBy==='date-desc') f.sort((a,b)=>((b.published||b.date||'')>(a.published||a.date||'')?1:-1));
-  else if (sortBy==='date-asc')  f.sort((a,b)=>((a.published||a.date||'')>(b.published||b.date||'')?1:-1));
+  if      (sortBy==='date-desc') f.sort((a,b)=>(normalizeDate(b.published||b.date||'')>normalizeDate(a.published||a.date||'')?1:-1));
+  else if (sortBy==='date-asc')  f.sort((a,b)=>(normalizeDate(a.published||a.date||'')>normalizeDate(b.published||b.date||'')?1:-1));
   else if (sortBy==='tracked')   f.sort((a,b)=>(tracked[getItemId(b)]?1:0)-(tracked[getItemId(a)]?1:0));
   else f.sort((a,b)=>{ const s=(so[getSentiment(a)]||2)-(so[getSentiment(b)]||2); return s!==0?s:(po[a.priority]||2)-(po[b.priority]||2); });
 
@@ -690,6 +770,9 @@ function applyFilters() {
 
   filteredItems = f;
   currentPage = 1;
+
+  // 更新側邊欄圓環（對應當前日期範圍）
+  renderDonut(activeCatGroup);
   renderPage();
 }
 
@@ -721,7 +804,7 @@ function renderPagination(pages) {
 function goPage(p){currentPage=p;renderPage();document.getElementById('newsList').scrollIntoView({behavior:'smooth',block:'start'});}
 
 /* ══════════════════════════════════════════
-   新聞列表（含修正 + 追蹤按鈕）
+   新聞列表
 ══════════════════════════════════════════ */
 function renderNewsList(items) {
   const c=document.getElementById('newsList'), e=document.getElementById('emptyState');
@@ -749,24 +832,23 @@ function renderNewsList(items) {
         <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sc}">${sent}</span>
         <span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">${item.category||''}</span>
         <span class="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-500">${item.platform||''}</span>
+        ${item.priority==='高'?'<span class="text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">高優先</span>':''}
         <span class="text-xs text-slate-300 ml-auto">${item.source||''}</span>
       </div>
       <a href="${item.url||'#'}" target="_blank" rel="noopener"
          class="link-title font-semibold text-sm block mb-1 leading-snug">${item.title||''}</a>
-      <p class="text-xs text-slate-400 mb-2">${item.summary||''}</p>
+      <p class="text-xs text-slate-400 mb-2">${item.content?item.content.slice(0,80)+'…':''}</p>
       ${clarify}
       <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
         <span class="text-xs text-slate-400">${toROC(item.published)}</span>
-        <span class="text-xs text-slate-300">點閱：-</span>
         <div class="flex items-center gap-1 ml-auto">
           <span class="text-xs text-slate-400">修正：</span>
           <button class="corr-btn corr-neg ${sent==='負面'?'on':''}" onclick="correct('${id}','負面',${idx})">負面</button>
           <button class="corr-btn corr-pos ${sent==='正面'?'on':''}" onclick="correct('${id}','正面',${idx})">正面</button>
           <button class="corr-btn corr-neu ${sent==='中立'?'on':''}" onclick="correct('${id}','中立',${idx})">中立</button>
           <button class="track-btn ml-2 ${isTracked?'on':''}" onclick="toggleTrack('${id}',${idx})"
-            id="tb-${idx}">${isTracked?'✓ 追蹤中':'+ 追蹤'}</button>
+            id="tb-${idx}">${isTracked?'✓ 已關注':'+ 關注'}</button>
         </div>
-        <a href="${item.url||'#'}" target="_blank" rel="noopener" class="text-xs text-blue-400 hover:text-blue-600">↗ 閱讀原文</a>
       </div>
     </div>`;
   }).join('');
@@ -780,13 +862,11 @@ function correct(id, newSent, idx) {
   if(c[id]===newSent){delete c[id];}else{c[id]=newSent;}
   saveCorrections(c);
   renderDonut(activeCatGroup);
-  // 更新卡片上的按鈕顯示
   const cur=c[id]||allItemsFlat.find(x=>getItemId(x)===id)?.sentiment||'中立';
   ['負面','正面','中立'].forEach(s=>{
     const btn=document.querySelector(`#card-${idx} .corr-${s==='負面'?'neg':s==='正面'?'pos':'neu'}`);
     if(btn){btn.classList.toggle('on',cur===s);}
   });
-  // 更新情感標籤顏色
   const sentEl=document.querySelector(`#card-${idx} .rounded-full.font-medium`);
   if(sentEl){
     sentEl.textContent=cur;
@@ -802,37 +882,45 @@ function toggleTrack(id, idx) {
   t[id]=!t[id]; if(!t[id]) delete t[id];
   saveTracked(t);
   const btn=document.getElementById('tb-'+idx);
-  if(btn){btn.textContent=t[id]?'✓ 追蹤中':'+ 追蹤'; btn.classList.toggle('on',!!t[id]);}
+  if(btn){btn.textContent=t[id]?'✓ 已關注':'+ 關注'; btn.classList.toggle('on',!!t[id]);}
   renderClarifyList();
 }
 
 /* ══════════════════════════════════════════
-   近2週焦點
+   近2週焦點（修正日期比較 + 按日期排序）
 ══════════════════════════════════════════ */
 function renderSpotlight(filter) {
   const el=document.getElementById('spotlightList');
-  const cut=new Date(Date.now()-14*86400000).toISOString().slice(0,10);
+  const cutDate = new Date(Date.now()-14*86400000).toISOString().slice(0,10);
   let items=[];
   Object.values(MONITOR_DATA).forEach(d=>{
-    (d.items||[]).forEach(x=>{ if((x.published||x.date||'')>=cut) items.push(x); });
+    (d.items||[]).forEach(x=>{
+      const nd = normalizeDate(x.published||x.date||'');
+      if(nd >= cutDate) items.push(x);
+    });
   });
+  // 全部：顯示所有情感；正面/負面：篩選
   if(filter) items=items.filter(x=>getSentiment(x)===filter);
-  const po={'高':0,'中':1,'低':2};
-  items.sort((a,b)=>{ const p=(po[a.priority]||2)-(po[b.priority]||2); return p!==0?p:((b.published||b.date||'')>(a.published||a.date||'')?1:-1); });
+  // 按日期新→舊排序
+  items.sort((a,b)=>{
+    const da=normalizeDate(a.published||a.date||'');
+    const db=normalizeDate(b.published||b.date||'');
+    return db>da?1:db<da?-1:0;
+  });
   if(!items.length){el.innerHTML='<p class="text-xs text-blue-400">近2週暫無資料</p>';return;}
-  el.innerHTML=items.slice(0,8).map(item=>{
+  el.innerHTML=items.slice(0,10).map(item=>{
     const s=getSentiment(item);
     const sc=s==='負面'?'#f87171':s==='正面'?'#4ade80':'#94a3b8';
     const sbg=s==='負面'?'#3b1d1d':s==='正面'?'#1a3b1a':'#1e2e3b';
     return `<div style="border-bottom:1px solid #1a2e4a" class="pb-2 last:border-0 last:pb-0">
       <a href="${item.url||'#'}" target="_blank" rel="noopener"
          class="text-xs font-medium block leading-snug mb-1 text-blue-100 hover:text-white transition">
-        ${(item.title||'').slice(0,40)}${(item.title?.length||0)>40?'…':''}
+        ${(item.title||'').slice(0,42)}${(item.title?.length||0)>42?'…':''}
       </a>
       <div class="flex items-center gap-1.5 text-xs text-blue-300">
-        <span style="background:${sbg};color:${sc}" class="px-1.5 py-0.5 rounded">${s}</span>
+        <span style="background:${sbg};color:${sc}" class="px-1.5 py-0.5 rounded shrink-0">${s}</span>
         <span class="truncate">${item.source||''}</span>
-        <span class="ml-auto shrink-0">${toROC(item.published||item.date)}</span>
+        <span class="ml-auto shrink-0">${normalizeDate(item.published||item.date).slice(5)}</span>
       </div>
     </div>`;
   }).join('');
@@ -849,10 +937,6 @@ function cpText(id,btn){
     const o=btn.textContent; btn.textContent='✓ 已複製'; btn.classList.replace('bg-green-500','bg-slate-400');
     setTimeout(()=>{btn.textContent=o;btn.classList.replace('bg-slate-400','bg-green-500');},2000);
   });
-}
-function cpUrgent(id,btn){
-  const el=document.getElementById(id); if(!el) return;
-  navigator.clipboard.writeText(el.textContent.trim()).then(()=>{ const o=btn.textContent; btn.textContent='✓'; setTimeout(()=>btn.textContent=o,2000); });
 }
 
 window.addEventListener('DOMContentLoaded', init);
