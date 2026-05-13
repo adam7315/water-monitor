@@ -712,7 +712,7 @@ function selectCat(name, el) {
    今日負面輿情（取代今日緊急預警）
 ══════════════════════════════════════════ */
 function renderTodayNeg(latest) {
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面'&&normalizeDate(x.date||x.published||'')===latest);
+  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面'&&normalizeDate(x.published||x.date||'')===latest);
   const el = document.getElementById('todayNegList');
   const countEl = document.getElementById('todayNegCount');
   if (!items.length) {
