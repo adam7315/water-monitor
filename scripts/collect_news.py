@@ -8,10 +8,25 @@
   5. NewsData.io API（若設定 API key）
 """
 import json, os, hashlib, time
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import quote
 import feedparser
 import requests
+
+# 只收 30 天內發布的文章（避免 Google News 翻出舊文）
+MAX_AGE_DAYS = 30
+CUTOFF_DATE  = date.today() - timedelta(days=MAX_AGE_DAYS)
+
+def is_recent(entry) -> bool:
+    """回傳 True 表示文章夠新（或無法判斷日期時放行）"""
+    pp = entry.get("published_parsed")
+    if pp:
+        try:
+            pub = date(pp[0], pp[1], pp[2])
+            return pub >= CUTOFF_DATE
+        except Exception:
+            pass
+    return True  # 沒有日期則放行
 
 # ── 關鍵字分組 ─────────────────────────────────────────────
 KEYWORDS = {
@@ -100,7 +115,9 @@ def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
     items = []
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:5]:
+        for entry in feed.entries[:10]:   # 多取幾筆，過濾後仍能達到目標數量
+            if not is_recent(entry):
+                continue
             uid = dedup_id(entry.get("title",""), entry.get("link",""))
             if uid in seen_hashes:
                 continue
@@ -118,6 +135,8 @@ def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
                 "platform": "新聞",
                 "feed_source": "Google News RSS"
             })
+            if len(items) >= 5:
+                break
     except Exception as e:
         print(f"  Google RSS 失敗 [{keyword}]: {e}")
     return items
@@ -130,6 +149,8 @@ def fetch_direct_rss() -> list:
             feed = feedparser.parse(feed_cfg["url"])
             matched = 0
             for entry in feed.entries:
+                if not is_recent(entry):
+                    continue
                 text = entry.get("title","") + " " + entry.get("summary","")
                 cat, kw = match_keywords(text)
                 if not cat:
@@ -164,6 +185,8 @@ def fetch_ptt_rss(board: str) -> list:
     try:
         feed = feedparser.parse(url)
         for entry in feed.entries[:10]:
+            if not is_recent(entry):
+                continue
             text = entry.get("title","") + " " + entry.get("summary","")
             cat, kw = match_keywords(text)
             if not cat:

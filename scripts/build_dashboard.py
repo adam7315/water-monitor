@@ -1031,7 +1031,8 @@ function renderNewsList(items) {
       <p class="text-xs text-slate-400 mb-2">${item.content?item.content.slice(0,80)+'…':''}</p>
       ${clarify}
       <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-        <span class="text-xs text-slate-400">${toROC(item.date||item.published)}</span>
+        <span class="text-xs text-slate-400" title="蒐集日期">${toROC(item.date||item.published)}</span>
+        ${(()=>{ const pub=normalizeDate(item.published||''),col=normalizeDate(item.date||''); return pub&&col&&pub!==col?`<span class="text-xs text-orange-400 font-medium" title="原始發布日">原文：${pub}</span>`:''; })()}
         <div class="flex items-center gap-1 ml-auto">
           <span class="text-xs text-slate-400">修正：</span>
           <button class="corr-btn corr-neg ${sent==='負面'?'on':''}" onclick="correct('${id}','負面',${idx})">負面</button>
