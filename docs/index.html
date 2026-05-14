@@ -1008,7 +1008,38 @@ function cpText(id,btn){
   });
 }
 
-window.addEventListener('DOMContentLoaded', init);
+/* ══════════════════════════════════════════
+   資料載入：優先從 Google Sheets，失敗才用 data.js
+══════════════════════════════════════════ */
+const _SHEETS_GET_URL = typeof SHEETS_API_URL !== 'undefined' ? SHEETS_API_URL : '';
+
+async function loadFromSheets() {
+  if (!_SHEETS_GET_URL) return false;
+  try {
+    const resp = await fetch(_SHEETS_GET_URL + '?action=getAll', {redirect:'follow'});
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (data.error || !data.monitor_data) throw new Error(data.error || 'no monitor_data');
+    if (typeof MONITOR_DATA !== 'undefined') Object.assign(window, {
+      MONITOR_DATA:    data.monitor_data,
+      TODAY:           data.today           || TODAY,
+      TOPIC_HEAT:      data.topic_heat      || TOPIC_HEAT,
+      KEYWORD_RANKING: data.keyword_ranking || KEYWORD_RANKING,
+      TOTAL_ALL:       data.total_all       != null ? data.total_all       : TOTAL_ALL,
+      TOTAL_NEG_ALL:   data.total_neg_all   != null ? data.total_neg_all   : TOTAL_NEG_ALL
+    });
+    console.log('[Sheets] 載入成功，共', Object.keys(data.monitor_data).length, '天');
+    return true;
+  } catch(e) {
+    console.warn('[Sheets] 讀取失敗，使用 data.js 備援:', e.message);
+    return false;
+  }
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadFromSheets();
+  init();
+});
 </script>
 </body>
 </html>
