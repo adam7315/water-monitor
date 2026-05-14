@@ -36,13 +36,15 @@ jobs:
       - name: Analyze sentiment
         run: python scripts/analyze.py
 
-      - name: Build dashboard
-        run: python scripts/build_dashboard.py
-
       - name: Sync to Google Sheets
         env:
           SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
         run: python scripts/sync_to_sheets.py
+
+      - name: Build dashboard
+        env:
+          SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
+        run: python scripts/build_dashboard.py
 
       - name: Commit and push
         run: |

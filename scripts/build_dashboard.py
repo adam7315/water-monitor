@@ -1,7 +1,8 @@
 """
-產生 GitHub Pages 靜態儀表板（v6）
+產生 GitHub Pages 靜態儀表板（v7）
+資料來源優先順序：1. Google Sheets（主要資料庫） 2. 本機 JSON（備援）
 """
-import json, os, glob
+import json, os, glob, requests
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from collections import Counter, defaultdict
@@ -11,10 +12,30 @@ DOCS_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
 os.makedirs(DOCS_DIR, exist_ok=True)
 TODAY = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 
-# 歸檔用 Apps Script Web App URL（寫入 Google Sheets）
-SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"
+SHEETS_API_URL = os.environ.get(
+    "SHEETS_API_URL",
+    "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"
+)
 
-def load_recent_data(days=90):
+# ── 主要資料來源：Google Sheets ──────────────────────────────
+def load_from_sheets():
+    """從 Google Sheets（主要資料庫）讀取所有輿情資料"""
+    try:
+        resp = requests.get(f"{SHEETS_API_URL}?action=getAll", timeout=30)
+        data = resp.json()
+        monitor_data = data.get("monitor_data", {})
+        # 資料品質檢查：需有至少 5 個日期且有文章
+        valid_dates = [d for d, v in monitor_data.items() if v.get("stats", {}).get("total", 0) > 0]
+        if len(valid_dates) < 5:
+            print(f"  Sheets 資料不足（{len(valid_dates)} 天），改用本機 JSON")
+            return None, None
+        return monitor_data, data
+    except Exception as e:
+        print(f"  Sheets API 讀取失敗：{e}，改用本機 JSON")
+        return None, None
+
+# ── 備援資料來源：本機 JSON ──────────────────────────────────
+def load_from_local_json(days=90):
     all_data = {}
     pattern = os.path.join(DATA_DIR, "analyzed_*.json")
     files = sorted(glob.glob(pattern), reverse=True)[:days]
@@ -48,14 +69,26 @@ def calc_keyword_ranking(all_data, top_n=20):
     return counter.most_common(top_n)
 
 def main():
-    all_data = load_recent_data()
-    if not all_data:
-        print("無資料，建立空白頁面")
+    # ── 1. 優先從 Google Sheets 讀取（主要資料庫）──
+    monitor_data, sheets_meta = load_from_sheets()
 
-    topic_heat      = calc_topic_heat(all_data)
-    keyword_ranking = calc_keyword_ranking(all_data)
-    total_all       = sum(d.get("stats", {}).get("total", 0) for d in all_data.values())
-    total_neg_all   = sum(d.get("stats", {}).get("negative", 0) for d in all_data.values())
+    if monitor_data and sheets_meta:
+        print(f"資料來源：Google Sheets（{len(monitor_data)} 天）")
+        all_data = monitor_data
+        topic_heat      = sheets_meta.get("topic_heat", calc_topic_heat(all_data))
+        keyword_ranking = sheets_meta.get("keyword_ranking", calc_keyword_ranking(all_data))
+        total_all       = sheets_meta.get("total_all", 0)
+        total_neg_all   = sheets_meta.get("total_neg_all", 0)
+    else:
+        # ── 2. 備援：本機 JSON ──
+        print("資料來源：本機 JSON（備援）")
+        all_data = load_from_local_json()
+        if not all_data:
+            print("無資料，建立空白頁面")
+        topic_heat      = calc_topic_heat(all_data)
+        keyword_ranking = calc_keyword_ranking(all_data)
+        total_all       = sum(d.get("stats", {}).get("total", 0) for d in all_data.values())
+        total_neg_all   = sum(d.get("stats", {}).get("negative", 0) for d in all_data.values())
 
     data_js = (
         f"const MONITOR_DATA = {json.dumps(all_data, ensure_ascii=False)};\n"
