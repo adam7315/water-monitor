@@ -122,18 +122,28 @@ function doGet(e) {
           .setMimeType(ContentService.MimeType.JSON);
       }
 
+      // 去除 HTML 標籤，避免 Gemini 接到 <a href=...> 等雜訊
+      const cleanContent = content.replace(/<[^>]+>/g, '').trim();
+
       const prompt =
-        `這則新聞被判斷為負面輿情，請用繁體中文撰寫約200字的澄清說明，適合直接傳送到 LINE 群組使用。\n` +
-        `標題：${title}\n內容摘要：${content}\n來源：${source}\n分類：${category}\n\n` +
-        `只回傳澄清文字本身，不要任何標題或前言。`;
+        '這則新聞被判斷為負面輿情，請務必用繁體中文撰寫約200字的澄清說明，' +
+        '適合直接傳送到 LINE 群組使用。\n' +
+        '標題：' + title + '\n' +
+        '內容摘要：' + (cleanContent || title) + '\n' +
+        '來源：' + source + '\n分類：' + category + '\n\n' +
+        '重要：只回傳繁體中文澄清文字，不要 JSON、不要英文、不要標題或前言。';
 
       const payload = {
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 500, temperature: 0.3 }
+        generationConfig: {
+          maxOutputTokens: 1024,
+          temperature: 0.3,
+          responseMimeType: 'text/plain'
+        }
       };
 
       const resp = UrlFetchApp.fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + apiKey,
         {
           method: 'post',
           contentType: 'application/json',
@@ -148,7 +158,12 @@ function doGet(e) {
           .setMimeType(ContentService.MimeType.JSON);
       }
 
-      const text = respData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      // gemini-2.5-flash 是 thinking model，parts[0] 是思考內容（thought:true），
+      // 必須過濾掉，只取實際回覆的 parts
+      const parts = respData.candidates?.[0]?.content?.parts || [];
+      const text = parts.filter(p => !p.thought).map(p => p.text || '').join('').trim()
+                   || parts.map(p => p.text || '').join('').trim()
+                   || '';
       return ContentService.createTextOutput(JSON.stringify({text}))
         .setMimeType(ContentService.MimeType.JSON);
     }
