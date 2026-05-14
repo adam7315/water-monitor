@@ -406,8 +406,8 @@ function init() {
 
   if (latest && MONITOR_DATA[latest]) {
     const todayPub = (MONITOR_DATA[latest].items||[]).filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);
-    const todayNegC  = todayPub.filter(x=>x.sentiment==='負面').length;
-    const todayPosC  = todayPub.filter(x=>x.sentiment==='正面').length;
+    const todayNegC  = todayPub.filter(x=>getSentiment(x)==='負面').length;
+    const todayPosC  = todayPub.filter(x=>getSentiment(x)==='正面').length;
     const todayHighC = todayPub.filter(x=>x.priority==='高').length;
     document.getElementById('statTotal').textContent = todayPub.length;
     document.getElementById('statNeg').textContent   = todayNegC;
