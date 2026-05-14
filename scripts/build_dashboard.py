@@ -2,13 +2,14 @@
 產生 GitHub Pages 靜態儀表板（v6）
 """
 import json, os, glob
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from collections import Counter, defaultdict
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 DOCS_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
 os.makedirs(DOCS_DIR, exist_ok=True)
-TODAY = date.today().isoformat()
+TODAY = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 
 # 歸檔用 Apps Script Web App URL（寫入 Google Sheets）
 SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"

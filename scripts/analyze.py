@@ -3,10 +3,11 @@
 使用 requests 直接呼叫 REST API，支援真正的 HTTP 超時
 """
 import json, os, time, requests
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
-TODAY    = date.today().isoformat()
+TODAY    = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 MAX_ITEMS = 30
 API_TIMEOUT = 20  # 秒，requests HTTP 超時
