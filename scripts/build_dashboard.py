@@ -695,7 +695,7 @@ function renderTodayNeg(latest) {
            class="link-title text-xs font-semibold block mb-1 leading-snug line-clamp-2">${item.title||''}${pri}</a>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-xs text-slate-400">${item.source||''}</span>
-          <span class="text-xs text-slate-300">${toROC(item.date||item.published)}</span>
+          <span class="text-xs text-slate-300">${toROC(item.pub_date||item.published||item.date)}</span>
           <button onclick="todayNegTrack('${id}',${i})"
             id="tdn-btn-${i}"
             class="ml-auto text-xs px-2 py-0.5 rounded-full font-medium border transition ${isTracked?'bg-blue-600 text-white border-blue-600':'bg-white text-blue-600 border-blue-300 hover:bg-blue-50'}">
@@ -751,7 +751,7 @@ function renderClarifyList() {
       <div class="flex items-start gap-2 mb-2">
         <a href="${item.url||'#'}" target="_blank" rel="noopener"
            class="link-title text-xs font-semibold flex-1 leading-snug line-clamp-1">${item.title||''}</a>
-        <span class="text-xs text-slate-400 shrink-0">${toROC(item.published)}</span>
+        <span class="text-xs text-slate-400 shrink-0">${toROC(item.pub_date||item.published||item.date)}</span>
         <button onclick="untrack('${id}')" class="text-slate-300 hover:text-red-400 text-xs shrink-0" title="移除追蹤">✕</button>
       </div>
       <div class="flex flex-wrap gap-1">${stageHtml}</div>
@@ -777,7 +777,7 @@ function archiveToForm(id) {
   if (!item) return;
   const wf = getWorkflows();
   if(!wf[id]) wf[id]={stage:1};
-  wf[id].stage = 4;
+  wf[id].stage = 5;  // 5 = 所有步驟完成，按鈕全部顯示藍色
   const lineMsg = wf[id].edited_text || item.line_message || '';
   saveWorkflows(wf);
   // 用 GET + action=archive 寫入歸檔試算表（避免 CORS 問題）
@@ -797,9 +797,9 @@ function archiveToForm(id) {
       .then(d=>{ showToast(d.error ? '歸檔失敗：'+d.error : '已歸檔 ✓'); })
       .catch(()=>{ showToast('歸檔失敗，請稍後再試'); });
   }
-  renderClarifyList();
-  // 歸檔後從今日負面輿情移除追蹤
+  // 先移除追蹤，再渲染，避免短暫閃爍
   const t=getTracked(); delete t[id]; saveTracked(t);
+  renderClarifyList();
   const dates = Object.keys(MONITOR_DATA).sort();
   renderTodayNeg(dates[dates.length-1]||'');
 }
@@ -985,7 +985,7 @@ function renderNewsList(items) {
       <p class="text-xs text-slate-400 mb-2">${item.content?item.content.slice(0,80)+'…':''}</p>
       ${clarify}
       <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 flex-wrap">
-        <span class="text-xs text-slate-400" title="發布日期">${toROC(item.published||item.date)}</span>
+        <span class="text-xs text-slate-400" title="發布日期">${toROC(item.pub_date||item.published||item.date)}</span>
         <div class="flex items-center gap-1 ml-auto">
           <span class="text-xs text-slate-400">修正：</span>
           <button class="corr-btn corr-neg ${sent==='負面'?'on':''}" onclick="correct('${id}','負面',${idx})">負面</button>
@@ -1070,7 +1070,7 @@ function showKwModal(kw, items) {
           <div class="flex flex-wrap gap-1.5 mb-1 items-center">
             <span class="text-xs px-2 py-0.5 rounded-full font-medium ${sc}">${s}</span>
             <span class="text-xs text-slate-400">${item.source||''}</span>
-            <span class="text-xs text-slate-300 ml-auto">${normalizeDate(item.date||item.published||'')}</span>
+            <span class="text-xs text-slate-300 ml-auto">${normalizeDate(item.pub_date||item.published||item.date||'')}</span>
           </div>
           <a href="${item.url||'#'}" target="_blank" rel="noopener"
              class="link-title text-sm font-medium block leading-snug">${item.title||''}</a>
@@ -1106,6 +1106,8 @@ async function loadFromSheets() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
     if (data.error || !data.monitor_data) throw new Error(data.error || 'no monitor_data');
+    // Sheets 回傳空資料時，保留 data.js 的本地資料，不覆蓋
+    if (Object.keys(data.monitor_data).length === 0) throw new Error('Sheets monitor_data 為空，使用本地資料');
     if (typeof MONITOR_DATA !== 'undefined') Object.assign(window, {
       MONITOR_DATA:    data.monitor_data,
       TODAY:           data.today           || TODAY,

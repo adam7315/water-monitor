@@ -1,17 +1,26 @@
 """
 每日新聞與社群媒體蒐集腳本
 來源：
-  1. Google News RSS（關鍵字逐一查詢）
-  2. 直接台灣新聞源 RSS（中央社、聯合、自由時報、ETtoday、公視）→ 全量掃描關鍵字
-  3. 國際新聞源 RSS（BBC / Global Times / Xinhua / Japan Times）→ 全量掃描關鍵字
-  4. PTT RSS
-  5. Google Custom Search（FB/IG/Dcard）
-  6. NewsData.io API（若設定 API key）
+  1. Google News RSS（關鍵字逐一查詢，附 after: 日期限制）
+  2. 直接台灣新聞源 RSS（水利署、中央社、聯合、自由時報、ETtoday、公視）→ 全量掃描關鍵字
+  3. 台灣環境資訊協會水資源 RSS（e-info.org.tw）
+  4. 國際新聞源 RSS（BBC / Global Times / Xinhua / Japan Times）→ 全量掃描關鍵字
+  5. PTT RSS
+  6. Google Custom Search（FB/IG/Dcard）
+  7. NewsData.io API（若設定 API key）
 
 v1：修正日期問題
   - MAX_AGE_DAYS 從 30 天縮為 7 天（過濾更嚴格）
   - CSE 從 snippet 解析真實發布日期，無法解析才 fallback 到 TODAY
   - is_recent() 加入 date string 支援，CSE fallback 時改為拒絕（不放行）
+
+v2：強化新聞管道精準度（水利署直接 RSS + 環保 RSS + 日期改進）
+  - 新增水利署最新消息 RSS（政府主管機關，直接相關）
+  - 新增水利署政策 RSS（大型政策/預算/環評公告）
+  - 新增台灣環境資訊協會水資源 RSS（e-info.org.tw，台灣水資源專題）
+  - Google News RSS 查詢加入 after: 日期參數
+  - is_recent() 加入 updated_parsed 備援（部分 RSS 只有 updated 欄位）
+  - 加入 extract_url_date() 從 URL 字串萃取日期（作為 Google News 的第二道驗證）
 """
 import json, os, re, hashlib, time
 from datetime import date, timedelta, datetime
@@ -31,13 +40,14 @@ def is_recent(entry, strict: bool = False) -> bool:
     strict=True：沒有日期時拒絕（用於 CSE）
     strict=False：沒有日期時放行（用於 RSS）
     """
-    pp = entry.get("published_parsed")
-    if pp:
-        try:
-            pub = date(pp[0], pp[1], pp[2])
-            return pub >= CUTOFF_DATE
-        except Exception:
-            pass
+    for key in ("published_parsed", "updated_parsed"):
+        pp = entry.get(key)
+        if pp:
+            try:
+                pub = date(pp[0], pp[1], pp[2])
+                return pub >= CUTOFF_DATE
+            except Exception:
+                pass
     # 嘗試從 date string 解析（CSE 用 parse_cse_date 後傳入）
     pub_str = entry.get("_pub_date_str", "")
     if pub_str:
@@ -46,6 +56,17 @@ def is_recent(entry, strict: bool = False) -> bool:
         except ValueError:
             pass
     return not strict  # strict=False 放行，strict=True 拒絕
+
+
+def extract_url_date(url: str) -> date | None:
+    """從 URL 字串中萃取日期（如 /2024/05/14/ 或 /20240514）。"""
+    m = re.search(r'/(20\d{2})[/-]?(\d{2})[/-]?(\d{2})', url)
+    if m:
+        try:
+            return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
+    return None
 
 def parse_cse_date(snippet: str) -> date | None:
     """從 CSE snippet 文字中萃取發布日期。"""
@@ -120,6 +141,11 @@ PRIORITY = {"海淡廠": 1, "南部水資源": 2, "全台水資源": 3, "國際"
 
 # ── 直接台灣新聞源 RSS（全量掃描，覆蓋率更高）──────────────
 DIRECT_RSS_FEEDS = [
+    # 水利署官網（政府主管機關，海淡廠政策/工程/公告直接來源）
+    {"url": "https://www.wra.gov.tw/OpenData.aspx?SN=20C1A3DAF6A74FCE", "source": "水利署", "platform": "官方"},
+    {"url": "https://www.wra.gov.tw/OpenData.aspx?SN=CA60F31A88AF3736", "source": "水利署政策", "platform": "官方"},
+    # 台灣環境資訊協會 — 水資源專題（精準涵蓋台灣水資源環境新聞）
+    {"url": "https://e-info.org.tw/taxonomy/term/63/feed", "source": "台灣環境資訊協會", "platform": "環保媒體"},
     # 中央社（官方，最高可信度）
     {"url": "https://feeds.feedburner.com/rsscna/social",     "source": "中央社", "platform": "新聞"},
     {"url": "https://feeds.feedburner.com/rsscna/lifehealth", "source": "中央社", "platform": "新聞"},
@@ -176,25 +202,34 @@ def match_keywords(text: str) -> tuple:
 # ── 1. Google News RSS（關鍵字查詢）──────────────────────────
 def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
     q = quote(keyword)
+    # 加入 after: 日期限制，確保只取近期文章
+    after_date = CUTOFF_DATE.isoformat()
     is_en = all(ord(c) < 128 for c in keyword.replace(' ',''))
     if is_en:
-        url = f"https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en"
+        url = (f"https://news.google.com/rss/search?q={q}+after:{after_date}"
+               f"&hl=en-US&gl=US&ceid=US:en")
     else:
-        url = f"https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+        url = (f"https://news.google.com/rss/search?q={q}+after:{after_date}"
+               f"&hl=zh-TW&gl=TW&ceid=TW:zh-Hant")
     items = []
     try:
         feed = feedparser.parse(url)
         for entry in feed.entries[:10]:
             if not is_recent(entry):
                 continue
-            uid = dedup_id(entry.get("title",""), entry.get("link",""))
+            link = entry.get("link", "")
+            # 二次驗證：從 URL 萃取日期，若明確顯示舊文章則跳過
+            url_date = extract_url_date(link)
+            if url_date and url_date < CUTOFF_DATE:
+                continue
+            uid = dedup_id(entry.get("title",""), link)
             if uid in seen_hashes:
                 continue
             seen_hashes.add(uid)
             items.append({
                 "id": uid,
                 "title": entry.get("title", ""),
-                "url": entry.get("link", ""),
+                "url": link,
                 "source": entry.get("source", {}).get("title", "Google News"),
                 "published": entry.get("published", ""),
                 "content": entry.get("summary", "")[:500],
@@ -391,8 +426,9 @@ def main():
                 print(f"  {kw}: {len(items)} 則")
             all_items.extend(items)
 
-    # 2. 直接新聞源（台灣 + 國際，全量掃描）
-    print(f"\n[直接新聞源] 台灣：中央社 / 聯合 / 自由時報 / ETtoday / 公視")
+    # 2. 直接新聞源（水利署官方 + 台灣 + 國際，全量掃描）
+    print(f"\n[直接新聞源] 官方：水利署 / 台灣環境資訊協會")
+    print(f"             台灣：中央社 / 聯合 / 自由時報 / ETtoday / 公視")
     print(f"             國際：BBC / Global Times / Xinhua / Japan Times...")
     direct_items = fetch_direct_rss()
     all_items.extend(direct_items)

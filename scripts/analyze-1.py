@@ -120,8 +120,8 @@ def main():
             "priority": priority,
             "is_credible_threat": sentiment == "負面" and priority == "高",
             "line_message": "",
-            "date": article_date,          # 文章實際發布日期
-            "collected_date": TODAY        # 收集日期（保留備查）
+            "date": TODAY,                 # 收集日（供 filterToday 分組用）
+            "pub_date": article_date,      # 文章實際發布日（顯示用）
         }
         analyzed.append(merged)
 
