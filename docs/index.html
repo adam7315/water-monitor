@@ -415,7 +415,13 @@ function init() {
   }
 
   allItemsFlat = [];
-  Object.values(MONITOR_DATA).forEach(d=>{ allItemsFlat=allItemsFlat.concat(d.items||[]); });
+  const _seenIds = new Set();
+  Object.values(MONITOR_DATA).forEach(d=>{
+    (d.items||[]).forEach(item=>{
+      const _id = item.id || (item.title||'')+(item.published||'');
+      if (!_seenIds.has(_id)) { _seenIds.add(_id); allItemsFlat.push(item); }
+    });
+  });
 
   // 預設日期範圍：近30天
   if (dates.length) {
@@ -682,7 +688,9 @@ function wfAction(id, stage) {
   if (!wf[id]) wf[id] = {stage:1};
   if (stage === 1) { openModal(id); return; }
   if (stage === 4) { archiveToForm(id); return; }
-  wf[id].stage = Math.max(wf[id].stage||1, stage);
+  // 點擊後往前推一步（已超過則不退回）
+  const cur = wf[id].stage || 1;
+  wf[id].stage = cur <= stage ? stage + 1 : cur;
   saveWorkflows(wf);
   renderClarifyList();
 }
@@ -696,27 +704,22 @@ function archiveToForm(id) {
   wf[id].stage = 4;
   const lineMsg = wf[id].edited_text || item.line_message || '';
   saveWorkflows(wf);
-  // 直接寫入 Google Sheets
-  const payload = {
-    date:         item.date || item.published || '',
-    title:        item.title || '',
-    source:       item.source || '',
-    url:          item.url || '',
-    sentiment:    item.sentiment || '負面',
-    category:     item.category || '',
-    line_message: lineMsg
-  };
-  if (typeof SHEETS_API_URL !== 'undefined' && SHEETS_API_URL) {
-    fetch(SHEETS_API_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    }).then(()=>{
-      showToast('已歸檔至 Google Sheets ✓');
-    }).catch(()=>{
-      showToast('歸檔失敗，請稍後再試');
+  // 用 GET + action=archive 寫入歸檔試算表（避免 CORS 問題）
+  if (_SHEETS_GET_URL) {
+    const p = new URLSearchParams({
+      action:       'archive',
+      date:         item.date || item.published || '',
+      title:        (item.title || '').slice(0, 150),
+      source:       item.source || '',
+      url:          (item.url || '').slice(0, 200),
+      sentiment:    item.sentiment || '負面',
+      category:     item.category || '',
+      line_message: lineMsg.slice(0, 500)
     });
+    fetch(_SHEETS_GET_URL + '?' + p.toString(), {redirect:'follow'})
+      .then(r=>r.json())
+      .then(d=>{ showToast(d.error ? '歸檔失敗：'+d.error : '已歸檔 ✓'); })
+      .catch(()=>{ showToast('歸檔失敗，請稍後再試'); });
   }
   renderClarifyList();
   // 歸檔後從今日負面輿情移除追蹤

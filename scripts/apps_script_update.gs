@@ -109,6 +109,32 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // action=archive → 寫入歸檔試算表
+    if (action === 'archive') {
+      const archiveId = '1ljNommiF8UsNQYqGBIHXTaMPPBODO_sFPXHkXgrwmRk';
+      const ss    = SpreadsheetApp.openById(archiveId);
+      const sheet = ss.getSheetByName('澄清追蹤') || ss.getSheets()[0];
+
+      if (sheet.getLastRow() === 0) {
+        sheet.appendRow(['日期','標題','來源','網址','情感','分類','澄清文稿','歸檔時間']);
+      }
+
+      const archiveTime = Utilities.formatDate(new Date(), 'Asia/Taipei', 'yyyy-MM-dd HH:mm');
+      sheet.appendRow([
+        e.parameter.date         || '',
+        e.parameter.title        || '',
+        e.parameter.source       || '',
+        e.parameter.url          || '',
+        e.parameter.sentiment    || '',
+        e.parameter.category     || '',
+        e.parameter.line_message || '',
+        archiveTime
+      ]);
+
+      return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // action=clarify → 呼叫 Gemini 產生澄清文稿
     if (action === 'clarify') {
       const title    = e.parameter.title    || '';
