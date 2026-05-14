@@ -33,8 +33,6 @@ jobs:
         run: python scripts/collect_news.py
 
       - name: Analyze sentiment
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scripts/analyze.py
 
       - name: Build dashboard

@@ -756,10 +756,60 @@ function renderClarifyList() {
 function wfAction(id, stage) {
   const wf = getWorkflows();
   if (!wf[id]) wf[id] = {stage:1};
+  if (stage === 1) { triggerAIDraft(id); return; }
   if (stage === 2) { openModal(id); return; }
   if (stage === 5) { archiveToForm(id); return; }
   wf[id].stage = Math.max(wf[id].stage||1, stage);
   saveWorkflows(wf);
+  renderClarifyList();
+}
+
+/* ── AI 文稿：使用者按「1.AI文稿」才呼叫 ── */
+async function triggerAIDraft(id) {
+  const item = allItemsFlat.find(x => getItemId(x) === id);
+  if (!item) return;
+
+  // 先開 modal 顯示 loading
+  openModalLoading(item);
+
+  let text = '';
+  if (_SHEETS_GET_URL) {
+    try {
+      const p = new URLSearchParams({
+        action:   'clarify',
+        title:    (item.title   || '').slice(0, 120),
+        content:  (item.content || '').slice(0, 300),
+        source:   item.source   || '',
+        category: item.category || ''
+      });
+      const resp = await fetch(_SHEETS_GET_URL + '&' + p.toString(), {redirect:'follow'});
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+      text = data.text || '';
+    } catch(e) {
+      console.warn('[AI Draft]', e.message);
+      text = '（AI 生成失敗：' + e.message + '）\n請手動填寫澄清文字。';
+    }
+  } else {
+    text = '（尚未設定 Apps Script URL）\n請手動填寫澄清文字。';
+  }
+
+  // 儲存到 workflow
+  const wf = getWorkflows();
+  if (!wf[id]) wf[id] = {stage:1};
+  wf[id].edited_text = text;
+  wf[id].stage = Math.max(wf[id].stage || 1, 1);
+  saveWorkflows(wf);
+
+  // 更新 modal：隱藏 loading，顯示 textarea
+  const spinner  = document.getElementById('wfLoadingSpinner');
+  const textarea = document.getElementById('wfTextarea');
+  const saveBtn  = document.getElementById('wfSaveBtn');
+  if (spinner)  spinner.classList.add('hidden');
+  if (textarea) { textarea.value = text; textarea.classList.remove('hidden'); }
+  if (saveBtn)  { saveBtn.disabled = false; saveBtn.classList.remove('opacity-50'); }
+
   renderClarifyList();
 }
 
@@ -805,27 +855,49 @@ function untrack(id) {
 }
 
 /* ══════════════════════════════════════════
-   工作流 Modal（人工修正）
+   工作流 Modal（loading 狀態 / 人工修正）
 ══════════════════════════════════════════ */
-function openModal(id) {
-  const item = allItemsFlat.find(x=>getItemId(x)===id);
-  const wf = getWorkflows()[id]||{stage:1};
-  const text = wf.edited_text || (item&&item.line_message) || '';
+function _modalBase(id, title, bodyHtml) {
   document.getElementById('wfModalContent').innerHTML = `
     <div class="mb-3">
       <div class="text-xs text-slate-400 mb-1">新聞標題</div>
-      <div class="text-sm font-medium text-slate-700 leading-snug">${item?.title||''}</div>
+      <div class="text-sm font-medium text-slate-700 leading-snug">${title}</div>
     </div>
+    ${bodyHtml}`;
+  document.getElementById('wfModal').classList.remove('hidden');
+}
+
+function openModalLoading(item) {
+  _modalBase(getItemId(item), item.title||'', `
     <div class="mb-4">
-      <div class="text-xs text-slate-400 mb-1">AI 澄清文稿（可手動修正）</div>
+      <div class="text-xs text-slate-400 mb-2">AI 澄清文稿</div>
+      <div id="wfLoadingSpinner" class="flex items-center justify-center py-8 text-slate-400 text-sm">
+        <span class="mr-2 animate-spin">⏳</span>AI 正在撰寫中，請稍候...
+      </div>
+      <textarea id="wfTextarea" rows="6" class="hidden w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"></textarea>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button onclick="closeModal()" class="text-xs border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50">取消</button>
+      <button id="wfSaveBtn" onclick="saveEdit('${getItemId(item)}')" disabled
+        class="text-xs bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 font-medium opacity-50">儲存修正</button>
+    </div>`);
+}
+
+function openModal(id) {
+  const item = allItemsFlat.find(x=>getItemId(x)===id);
+  const wf   = getWorkflows()[id]||{stage:1};
+  const text = wf.edited_text || '';
+  _modalBase(id, item?.title||'', `
+    <div class="mb-4">
+      <div class="text-xs text-slate-400 mb-1">澄清文稿（可手動修正）</div>
       <textarea id="wfTextarea" rows="6"
         class="w-full border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300">${text}</textarea>
     </div>
     <div class="flex gap-2 justify-end">
       <button onclick="closeModal()" class="text-xs border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-50">取消</button>
-      <button onclick="saveEdit('${id}')" class="text-xs bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 font-medium">儲存修正</button>
-    </div>`;
-  document.getElementById('wfModal').classList.remove('hidden');
+      <button id="wfSaveBtn" onclick="saveEdit('${id}')"
+        class="text-xs bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 font-medium">儲存修正</button>
+    </div>`);
 }
 
 function saveEdit(id) {

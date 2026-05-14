@@ -1,21 +1,14 @@
 """
-輿情分析：關鍵字預分類 + Gemini REST API（僅負面項目呼叫）
-使用 requests 直接呼叫 REST API，支援真正的 HTTP 超時
+輿情分析：關鍵字預分類 → 情感判斷 + 優先度
+AI 澄清文稿不在此生成，由前端使用者手動點「AI文稿」按鈕觸發。
 """
-import json, os, time, requests
+import json, os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 TODAY    = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 MAX_ITEMS = 30
-API_TIMEOUT = 20  # 秒，requests HTTP 超時
-
-GEMINI_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-1.5-flash:generateContent?key={key}"
-)
 
 # ── 關鍵字分類規則 ──────────────────────────────────────────
 NEGATIVE_KEYWORDS = [
@@ -57,37 +50,7 @@ def keyword_priority(sentiment: str, category: str) -> str:
         return "中"
     return "低"
 
-def gemini_clarify(item: dict) -> str:
-    title   = item.get("title", "")[:100]
-    content = item.get("content", "")[:200]
-    source  = item.get("source", "")
-    prompt = (
-        f"這則新聞被判斷為負面輿情，請用繁體中文撰寫一段約200字的澄清說明，"
-        f"適合直接傳送到 LINE 群組使用。\n"
-        f"標題：{title}\n內容：{content}\n來源：{source}\n\n"
-        f"只回傳澄清文字，不要任何標題或前言。"
-    )
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"maxOutputTokens": 400, "temperature": 0.3}
-    }
-    try:
-        r = requests.post(
-            GEMINI_URL.format(key=GEMINI_API_KEY),
-            json=payload,
-            timeout=API_TIMEOUT
-        )
-        r.raise_for_status()
-        data = r.json()
-        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-    except Exception as e:
-        print(f"    Gemini 失敗：{e}")
-        return ""
-
 def main():
-    if not GEMINI_API_KEY:
-        print("ERROR: GEMINI_API_KEY 未設定"); return
-
     raw_path = os.path.join(DATA_DIR, f"raw_{TODAY}.json")
     if not os.path.exists(raw_path):
         print(f"找不到原始資料：{raw_path}"); return
@@ -103,7 +66,6 @@ def main():
     print(f"=== 分析 {len(items)} 則新聞（最多 {MAX_ITEMS}）===")
 
     analyzed = []
-    neg_count = 0
     for i, item in enumerate(items):
         title = item.get("title", "")
         text  = title + " " + item.get("content", "")
@@ -111,25 +73,17 @@ def main():
         sentiment = keyword_classify(text)
         category  = item.get("category", "全台水資源")
         priority  = keyword_priority(sentiment, category)
-        summary   = title[:30]
-        line_msg  = ""
 
         print(f"  [{i+1}/{len(items)}] {sentiment} {title[:40]}...")
-
-        if sentiment == "負面":
-            neg_count += 1
-            print(f"    → 呼叫 Gemini 產生澄清文字（第 {neg_count} 則負面）")
-            line_msg = gemini_clarify(item)
-            time.sleep(2)  # 避免 rate limit
 
         merged = {
             **item,
             "sentiment": sentiment,
             "category": category,
-            "summary": summary,
+            "summary": title[:30],
             "priority": priority,
             "is_credible_threat": sentiment == "負面" and priority == "高",
-            "line_message": line_msg,
+            "line_message": "",   # 前端使用者按「AI文稿」才生成
             "date": TODAY
         }
         analyzed.append(merged)
@@ -148,7 +102,6 @@ def main():
         json.dump({"stats": stats, "items": analyzed}, f, ensure_ascii=False, indent=2)
 
     print(f"\n正面:{stats['positive']} 負面:{stats['negative']} 中立:{stats['neutral']} 高優先:{stats['high_priority']}")
-    print(f"Gemini 呼叫次數：{neg_count}（僅負面項目）")
     print(f"完成 → {out_path}")
 
 if __name__ == "__main__":

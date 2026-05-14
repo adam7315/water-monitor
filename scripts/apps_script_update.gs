@@ -1,11 +1,17 @@
 /**
  * 水資源輿情監控系統 — Google Apps Script
- * 更新說明：在現有 doPost 之外，新增 doGet 讓網頁可直接從 Sheets 讀取資料。
+ *
+ * 更新說明：
+ *  1. doGet 支援三個 action：status / getAll / clarify
+ *  2. doPost 補強去重邏輯
  *
  * 操作步驟：
  *  1. 開啟 Apps Script 編輯器（script.google.com）
- *  2. 將現有的 doGet 函式替換成下方 doGet
- *  3. 儲存 → 部署 → 管理部署 → 新版本 → 部署（URL 不變）
+ *  2. 全選貼上此檔案內容（取代現有全部代碼）
+ *  3. 設定 Gemini API Key：
+ *     左側 ⚙️ 專案設定 → 指令碼屬性 → 新增屬性
+ *     屬性名稱：GEMINI_API_KEY　值：你的 Gemini API Key
+ *  4. 儲存 → 部署 → 管理部署 → 新版本 → 部署（URL 不變）
  */
 
 // ─────────────────────────────────────────────────────────
@@ -100,6 +106,50 @@ function doGet(e) {
 
       return ContentService
         .createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // action=clarify → 呼叫 Gemini 產生澄清文稿
+    if (action === 'clarify') {
+      const title    = e.parameter.title    || '';
+      const content  = e.parameter.content  || '';
+      const source   = e.parameter.source   || '';
+      const category = e.parameter.category || '';
+
+      const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+      if (!apiKey) {
+        return ContentService.createTextOutput(JSON.stringify({error: 'GEMINI_API_KEY 未設定（請在指令碼屬性設定）'}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const prompt =
+        `這則新聞被判斷為負面輿情，請用繁體中文撰寫約200字的澄清說明，適合直接傳送到 LINE 群組使用。\n` +
+        `標題：${title}\n內容摘要：${content}\n來源：${source}\n分類：${category}\n\n` +
+        `只回傳澄清文字本身，不要任何標題或前言。`;
+
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 500, temperature: 0.3 }
+      };
+
+      const resp = UrlFetchApp.fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'post',
+          contentType: 'application/json',
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        }
+      );
+
+      const respData = JSON.parse(resp.getContentText());
+      if (resp.getResponseCode() !== 200) {
+        return ContentService.createTextOutput(JSON.stringify({error: 'Gemini API 失敗：' + (respData.error?.message || resp.getResponseCode())}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const text = respData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      return ContentService.createTextOutput(JSON.stringify({text}))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
