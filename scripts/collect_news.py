@@ -2,20 +2,23 @@
 每日新聞與社群媒體蒐集腳本
 來源：
   1. Google News RSS（關鍵字逐一查詢）
-  2. 直接台灣新聞源 RSS（中央社、聯合新聞網）→ 全量掃描關鍵字
+  2. 直接台灣新聞源 RSS（中央社、聯合、自由時報、ETtoday、公視）→ 全量掃描關鍵字
   3. PTT RSS
   4. Google Custom Search（FB/IG/Dcard）
   5. NewsData.io API（若設定 API key）
 """
 import json, os, hashlib, time
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import quote
 import feedparser
 import requests
 
+_TW = ZoneInfo('Asia/Taipei')
+
 # 只收 30 天內發布的文章（避免 Google News 翻出舊文）
 MAX_AGE_DAYS = 30
-CUTOFF_DATE  = date.today() - timedelta(days=MAX_AGE_DAYS)
+CUTOFF_DATE  = datetime.now(_TW).date() - timedelta(days=MAX_AGE_DAYS)
 
 def is_recent(entry) -> bool:
     """回傳 True 表示文章夠新（或無法判斷日期時放行）"""
@@ -78,14 +81,25 @@ DIRECT_RSS_FEEDS = [
     {"url": "https://feeds.feedburner.com/rsscna/finance",    "source": "中央社", "platform": "新聞"},
     {"url": "https://feeds.feedburner.com/rsscna/local",      "source": "中央社", "platform": "新聞"},
     # 聯合新聞網
-    {"url": "https://udn.com/rssfeed/news/2/6638?ch=news",    "source": "聯合新聞網", "platform": "新聞"},
+    {"url": "https://udn.com/rssfeed/news/2/6638?ch=news",         "source": "聯合新聞網", "platform": "新聞"},
     {"url": "https://udn.com/rssfeed/news/2/BREAKINGNEWS?ch=news", "source": "聯合新聞網", "platform": "新聞"},
+    # 自由時報（台灣最大媒體之一）
+    {"url": "https://news.ltn.com.tw/rss/all.xml",      "source": "自由時報", "platform": "新聞"},
+    {"url": "https://news.ltn.com.tw/rss/society.xml",  "source": "自由時報", "platform": "新聞"},
+    {"url": "https://news.ltn.com.tw/rss/local.xml",    "source": "自由時報", "platform": "新聞"},
+    {"url": "https://news.ltn.com.tw/rss/politics.xml", "source": "自由時報", "platform": "新聞"},
+    # ETtoday（社會地方新聞豐富）
+    {"url": "https://feeds.feedburner.com/ettoday/realtime", "source": "ETtoday", "platform": "新聞"},
+    {"url": "https://feeds.feedburner.com/ettoday/society",  "source": "ETtoday", "platform": "新聞"},
+    {"url": "https://feeds.feedburner.com/ettoday/local",    "source": "ETtoday", "platform": "新聞"},
+    # 公視新聞（官方性質，政策水利新聞多）
+    {"url": "https://news.pts.org.tw/xml/newsfeed.xml", "source": "公視新聞", "platform": "新聞"},
 ]
 
 CSE_API_KEY      = os.environ.get("GOOGLE_CSE_API_KEY", "")
 CSE_ID           = os.environ.get("GOOGLE_CSE_ID", "964c6016fea3947d5")
 NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")
-TODAY            = date.today().isoformat()
+TODAY            = datetime.now(_TW).date().isoformat()
 DATA_DIR         = os.path.join(os.path.dirname(__file__), "..", "data")
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -310,7 +324,7 @@ def main():
             all_items.extend(items)
 
     # 2. 直接台灣新聞源（全量掃描）
-    print(f"\n[直接新聞源] 中央社 / 聯合新聞網...")
+    print(f"\n[直接新聞源] 中央社 / 聯合 / 自由時報 / ETtoday / 公視...")
     direct_items = fetch_direct_rss()
     all_items.extend(direct_items)
     print(f"  直接新聞源合計：{len(direct_items)} 則相關")
