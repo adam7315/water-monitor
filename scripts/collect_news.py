@@ -3,9 +3,10 @@
 來源：
   1. Google News RSS（關鍵字逐一查詢）
   2. 直接台灣新聞源 RSS（中央社、聯合、自由時報、ETtoday、公視）→ 全量掃描關鍵字
-  3. PTT RSS
-  4. Google Custom Search（FB/IG/Dcard）
-  5. NewsData.io API（若設定 API key）
+  3. 國際新聞源 RSS（BBC / Global Times / Xinhua / Japan Times）→ 全量掃描關鍵字
+  4. PTT RSS
+  5. Google Custom Search（FB/IG/Dcard）
+  6. NewsData.io API（若設定 API key）
 """
 import json, os, hashlib, time
 from datetime import date, timedelta, datetime
@@ -94,6 +95,16 @@ DIRECT_RSS_FEEDS = [
     {"url": "https://feeds.feedburner.com/ettoday/local",    "source": "ETtoday", "platform": "新聞"},
     # 公視新聞（官方性質，政策水利新聞多）
     {"url": "https://news.pts.org.tw/xml/newsfeed.xml", "source": "公視新聞", "platform": "新聞"},
+    # ── 國際新聞源（英文，掃描脫鹽/水資源關鍵字）──────────────
+    # 英國 BBC（World / Asia / Science & Environment）
+    {"url": "https://feeds.bbci.co.uk/news/world/rss.xml",                   "source": "BBC News",    "platform": "國際新聞"},
+    {"url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml",              "source": "BBC News",    "platform": "國際新聞"},
+    {"url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", "source": "BBC News",    "platform": "國際新聞"},
+    # 中國（Global Times 英文 / 新華社英文）
+    {"url": "https://www.globaltimes.cn/rssfeeds/outbrain.xml",              "source": "Global Times","platform": "國際新聞"},
+    {"url": "http://www.xinhuanet.com/english/rss/worldrss.xml",             "source": "Xinhua",      "platform": "國際新聞"},
+    # 日本（Japan Times）
+    {"url": "https://www.japantimes.co.jp/feed/",                            "source": "Japan Times", "platform": "國際新聞"},
 ]
 
 CSE_API_KEY      = os.environ.get("GOOGLE_CSE_API_KEY", "")
@@ -323,15 +334,16 @@ def main():
                 print(f"  {kw}: {len(items)} 則")
             all_items.extend(items)
 
-    # 2. 直接台灣新聞源（全量掃描）
-    print(f"\n[直接新聞源] 中央社 / 聯合 / 自由時報 / ETtoday / 公視...")
+    # 2. 直接新聞源（台灣 + 國際，全量掃描）
+    print(f"\n[直接新聞源] 台灣：中央社 / 聯合 / 自由時報 / ETtoday / 公視")
+    print(f"             國際：BBC / Global Times / Xinhua / Japan Times...")
     direct_items = fetch_direct_rss()
     all_items.extend(direct_items)
     print(f"  直接新聞源合計：{len(direct_items)} 則相關")
 
     # 3. PTT
     print(f"\n[社群] PTT...")
-    for board in ["WaterEngr", "Gossiping", "TW-News"]:
+    for board in ["WaterEngr", "Gossiping", "TW-News", "Environment", "Tainan"]:
         items = fetch_ptt_rss(board)
         print(f"  {board}: {len(items)} 則相關")
         all_items.extend(items)

@@ -3,13 +3,14 @@
 讀取 analyzed_{TODAY}.json，批次 POST 到 Apps Script Web App
 """
 import json, os, requests
-from datetime import date
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 SHEETS_API_URL = os.environ.get(
     "SHEETS_API_URL",
     "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"
 )
-TODAY    = date.today().isoformat()
+TODAY    = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 
 def main():
