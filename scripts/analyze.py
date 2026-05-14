@@ -149,6 +149,37 @@ def main():
     items = deduped
     print(f"去重後：{len(items)} 則")
 
+    # 3. 舊文過濾：pub_date 超過 14 天且非負面 → 移除
+    # （Google News 有時翻出舊文配上近期日期，這類非負面舊文不具監控價值）
+    from datetime import date as _date, timedelta
+    _cutoff = _date.fromisoformat(TODAY) - timedelta(days=14)
+
+    def _is_old_nonneg(item: dict) -> bool:
+        pd = item.get("pub_date", "") or item.get("date", "")
+        if not pd or len(pd) < 10:
+            return False
+        try:
+            pub = _date.fromisoformat(pd[:10])
+            return pub < _cutoff
+        except Exception:
+            return False
+
+    before_old = len(items)
+    # 先做情感分類，以便用來決定是否保留
+    def _quick_sentiment(item: dict) -> str:
+        text = (item.get("title", "") + " " + item.get("content", "")).lower()
+        neg_score = sum(1 for kw in NEGATIVE_KEYWORDS if kw in text)
+        pos_score = sum(1 for kw in POSITIVE_KEYWORDS if kw in text)
+        if neg_score > pos_score:
+            return "負面"
+        elif pos_score > 0:
+            return "正面"
+        return "中立"
+
+    items = [x for x in items
+             if not _is_old_nonneg(x) or _quick_sentiment(x) == "負面"]
+    print(f"舊文非負面過濾後：{len(items)} 則（移除 {before_old - len(items)} 篇）")
+
     # 3. 依類別優先排序，取前 MAX_ITEMS
     priority_map = {"海淡廠": 1, "社群輿情": 2, "南部水資源": 2, "全台水資源": 3, "國際": 4}
     items.sort(key=lambda x: priority_map.get(x.get("category", ""), 5))
