@@ -4,15 +4,83 @@ AI 澄清文稿不在此生成，由前端使用者手動點「AI文稿」按鈕
 """
 import json, os
 from datetime import datetime
+from email.utils import parsedate_to_datetime
+from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
-TODAY    = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
+_TW = ZoneInfo('Asia/Taipei')
+TODAY    = datetime.now(_TW).date().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
-MAX_ITEMS = 30
+MAX_ITEMS = 200  # 由 30 提升至 200，避免截斷重要新聞
+
+# ── 封鎖垃圾/非新聞網域（與 collect_news.py 保持一致）──────
+DOMAIN_BLACKLIST = {
+    "fathomjournal.org",
+    "lineshoppingtw.line.me",
+    "tripadvisor.com",
+    "tripadvisor.com.tw",
+    "agoda.com",
+    "booking.com",
+    "pixnet.net",
+    "upskilltw.com",
+    "matters.town",
+    "ia.gov.tw",
+}
+
+# 封鎖特定 source（Google News 重導向 URL 看不出原始域名，需靠 source 欄）
+SOURCE_BLACKLIST = {
+    "ia.gov.tw",   # 政府活動頁，非新聞
+    "Fathom Journal",
+    "fathomjournal.org",
+}
+
+def is_junk_url(url: str) -> bool:
+    if not url:
+        return True
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower().lstrip("www.")
+        if domain in DOMAIN_BLACKLIST:
+            return True
+        if "today.line.me" in domain and "/discuss/" in parsed.path:
+            return True
+    except Exception:
+        pass
+    return False
+
+def is_junk_title(title: str) -> bool:
+    """過濾明顯非新聞的標題"""
+    junk_markers = ["美食", "旅遊", "一日遊", "餐廳", "住宿", "❁", "🍽", "秘境"]
+    return any(m in title for m in junk_markers)
+
+def extract_pub_date(item: dict) -> str:
+    """從 item 的 published/pub_date 欄位解析出 YYYY-MM-DD"""
+    # 優先使用已有的 pub_date
+    if item.get("pub_date") and len(item["pub_date"]) >= 10:
+        return item["pub_date"][:10]
+    published = item.get("published", "")
+    if not published:
+        return TODAY
+    # RFC 2822 格式（RSS 標準）
+    try:
+        dt = parsedate_to_datetime(published)
+        return dt.astimezone(_TW).date().isoformat()
+    except Exception:
+        pass
+    # ISO 8601 格式
+    try:
+        dt = datetime.fromisoformat(published.replace("Z", "+00:00"))
+        return dt.astimezone(_TW).date().isoformat()
+    except Exception:
+        pass
+    # 直接取前 10 字元
+    if len(published) >= 10 and published[4:5] in ("-", "/"):
+        return published[:10].replace("/", "-")
+    return TODAY
 
 # ── 關鍵字分類規則 ──────────────────────────────────────────
 NEGATIVE_KEYWORDS = [
-    # 直接抗議/不滿（最高權重）
+    # 直接抗議/不滿
     "抗議", "陳情", "抗爭", "示威", "連署", "反對", "怒", "憤",
     "抱怨", "不滿", "生氣", "憤怒", "民怨", "居民反彈", "居民抗議",
     "漁民抗議", "養殖業者反對", "環團抗議",
@@ -22,8 +90,8 @@ NEGATIVE_KEYWORDS = [
     # 缺水/水質問題
     "缺水", "乾旱", "限水", "停水", "水荒", "汙染", "污染", "水質",
     "漏水", "管線破裂", "供水不足", "水庫低", "蓄水不足",
-    # 警示/風險
-    "危機", "警戒", "警告", "風險", "威脅", "衝擊", "損害",
+    # 洪水/警示/風險
+    "淹水", "危機", "警戒", "警告", "風險", "威脅", "衝擊", "損害",
     # 英文
     "water crisis", "water shortage", "contamination", "protest", "oppose"
 ]
@@ -58,7 +126,30 @@ def main():
     with open(raw_path, encoding="utf-8") as f:
         items = json.load(f)
 
-    # 依類別優先排序，只取前 MAX_ITEMS
+    print(f"原始資料：{len(items)} 則")
+
+    # ── 品質過濾 ────────────────────────────────────────────
+    # 1. 過濾垃圾 URL / 標題 / 來源
+    items = [x for x in items
+             if not is_junk_url(x.get("url", ""))
+             and not is_junk_title(x.get("title", ""))
+             and x.get("source", "") not in SOURCE_BLACKLIST]
+    print(f"過濾垃圾後：{len(items)} 則")
+
+    # 2. URL 去重（analyze 層再做一道保險）
+    seen_urls: set = set()
+    deduped = []
+    for item in items:
+        url = item.get("url", "")
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            deduped.append(item)
+        elif not url:
+            deduped.append(item)
+    items = deduped
+    print(f"去重後：{len(items)} 則")
+
+    # 3. 依類別優先排序，取前 MAX_ITEMS
     priority_map = {"海淡廠": 1, "社群輿情": 2, "南部水資源": 2, "全台水資源": 3, "國際": 4}
     items.sort(key=lambda x: priority_map.get(x.get("category", ""), 5))
     items = items[:MAX_ITEMS]
@@ -67,33 +158,34 @@ def main():
 
     analyzed = []
     for i, item in enumerate(items):
-        title = item.get("title", "")
-        text  = title + " " + item.get("content", "")
-
+        title    = item.get("title", "")
+        text     = title + " " + item.get("content", "")
         sentiment = keyword_classify(text)
         category  = item.get("category", "全台水資源")
         priority  = keyword_priority(sentiment, category)
+        pub_date  = extract_pub_date(item)
 
         print(f"  [{i+1}/{len(items)}] {sentiment} {title[:40]}...")
 
         merged = {
             **item,
-            "sentiment": sentiment,
-            "category": category,
-            "summary": title[:30],
-            "priority": priority,
+            "sentiment":          sentiment,
+            "category":           category,
+            "summary":            title[:30],
+            "priority":           priority,
             "is_credible_threat": sentiment == "負面" and priority == "高",
-            "line_message": "",   # 前端使用者按「AI文稿」才生成
-            "date": TODAY
+            "line_message":       "",
+            "pub_date":           pub_date,
+            "date":               TODAY,
         }
         analyzed.append(merged)
 
     stats = {
-        "total":        len(analyzed),
-        "positive":     sum(1 for x in analyzed if x.get("sentiment") == "正面"),
-        "negative":     sum(1 for x in analyzed if x.get("sentiment") == "負面"),
-        "neutral":      sum(1 for x in analyzed if x.get("sentiment") == "中立"),
-        "high_priority":sum(1 for x in analyzed if x.get("priority") == "高"),
+        "total":         len(analyzed),
+        "positive":      sum(1 for x in analyzed if x.get("sentiment") == "正面"),
+        "negative":      sum(1 for x in analyzed if x.get("sentiment") == "負面"),
+        "neutral":       sum(1 for x in analyzed if x.get("sentiment") == "中立"),
+        "high_priority": sum(1 for x in analyzed if x.get("priority") == "高"),
         "date": TODAY
     }
 
