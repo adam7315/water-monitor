@@ -481,13 +481,16 @@ function init() {
   document.getElementById('statsDateLabel').textContent   = latest;
 
   if (latest && MONITOR_DATA[latest]) {
-    const s = MONITOR_DATA[latest].stats||{};
-    document.getElementById('statTotal').textContent = s.total||0;
-    document.getElementById('statNeg').textContent   = s.negative||0;
-    document.getElementById('statPos').textContent   = s.positive||0;
-    document.getElementById('statHigh').textContent  = s.high_priority||0;
-    document.getElementById('hdrPos').textContent    = s.positive||0;
-    document.getElementById('hdrNeg').textContent    = s.negative||0;
+    const todayPub = (MONITOR_DATA[latest].items||[]).filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);
+    const todayNegC  = todayPub.filter(x=>x.sentiment==='負面').length;
+    const todayPosC  = todayPub.filter(x=>x.sentiment==='正面').length;
+    const todayHighC = todayPub.filter(x=>x.priority==='高').length;
+    document.getElementById('statTotal').textContent = todayPub.length;
+    document.getElementById('statNeg').textContent   = todayNegC;
+    document.getElementById('statPos').textContent   = todayPosC;
+    document.getElementById('statHigh').textContent  = todayHighC;
+    document.getElementById('hdrPos').textContent    = todayPosC;
+    document.getElementById('hdrNeg').textContent    = todayNegC;
   }
 
   allItemsFlat = [];
@@ -593,7 +596,6 @@ function resetHome() {
   activeCatGroup = null;
   document.querySelectorAll('.cat-circle').forEach(c=>c.classList.remove('active'));
   applyFilters();
-  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 /* ══════════════════════════════════════════
@@ -897,14 +899,14 @@ function applyFilters() {
   if (sent) f = f.filter(x=>getSentiment(x)===sent);
   if (highPriorityOnly) f = f.filter(x=>x.priority==='高');
 
-  if (from) f = f.filter(x=>normalizeDate(x.date||x.published||'')>=from);
-  if (to)   f = f.filter(x=>normalizeDate(x.date||x.published||'')<=to);
+  if (from) f = f.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')>=from);
+  if (to)   f = f.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')<=to);
 
   if (kw) f = f.filter(x=>(x.title||'').toLowerCase().includes(kw)||(x.keyword||'').toLowerCase().includes(kw)||(x.content||'').toLowerCase().includes(kw));
 
   const so={'負面':0,'中立':1,'正面':2}, po={'高':0,'中':1,'低':2};
-  if      (sortBy==='date-desc') f.sort((a,b)=>(normalizeDate(b.date||b.published||'')>normalizeDate(a.date||a.published||'')?1:-1));
-  else if (sortBy==='date-asc')  f.sort((a,b)=>(normalizeDate(a.date||a.published||'')>normalizeDate(b.date||b.published||'')?1:-1));
+  if      (sortBy==='date-desc') f.sort((a,b)=>(normalizeDate(b.pub_date||b.published||b.date||'')>normalizeDate(a.pub_date||a.published||a.date||'')?1:-1));
+  else if (sortBy==='date-asc')  f.sort((a,b)=>(normalizeDate(a.pub_date||a.published||a.date||'')>normalizeDate(b.pub_date||b.published||b.date||'')?1:-1));
   else if (sortBy==='tracked')   f.sort((a,b)=>(tracked[getItemId(b)]?1:0)-(tracked[getItemId(a)]?1:0));
   else f.sort((a,b)=>{ const s=(so[getSentiment(a)]||2)-(so[getSentiment(b)]||2); return s!==0?s:(po[a.priority]||2)-(po[b.priority]||2); });
 
