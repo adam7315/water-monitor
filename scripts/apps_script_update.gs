@@ -1,11 +1,10 @@
 /**
  * 水資源輿情監控系統 — Google Apps Script
- *
- * 支援中英文欄位名稱，統一以發布日（pub_date）分組
+ * v16: true upsert by URL + deduplicateAll cleanup action
  */
 
 // ─────────────────────────────────────────────────────────
-//  工具：將各種日期格式統一轉為 YYYY-MM-DD
+//  工具：將各種日期格式統一轉為 YYYY-MM-DD（Asia/Taipei）
 // ─────────────────────────────────────────────────────────
 function normalizeDate_(s) {
   if (!s) return '';
@@ -21,7 +20,7 @@ function normalizeDate_(s) {
 }
 
 // ─────────────────────────────────────────────────────────
-//  工具：將中文欄位名稱對應到英文欄位名稱
+//  工具：中文欄位名稱 → 英文欄位名稱
 // ─────────────────────────────────────────────────────────
 function mapHeaders_(headers) {
   var map = {
@@ -34,14 +33,36 @@ function mapHeaders_(headers) {
 }
 
 // ─────────────────────────────────────────────────────────
-//  工具：找欄位索引（支援中英文名稱）
+//  工具：找欄位索引（支援中英文名稱，回傳 1-indexed 欄號）
 // ─────────────────────────────────────────────────────────
-function findCol_(headers, ...names) {
-  for (const name of names) {
-    const idx = headers.indexOf(name);
+function findCol_(headers) {
+  var names = Array.prototype.slice.call(arguments, 1);
+  for (var i = 0; i < names.length; i++) {
+    var idx = headers.indexOf(names[i]);
     if (idx >= 0) return idx + 1;
   }
   return 0;
+}
+
+// ─────────────────────────────────────────────────────────
+//  工具：根據 rawHeaders 和 item 組出一列資料
+// ─────────────────────────────────────────────────────────
+function buildRow_(rawHeaders, item) {
+  var colMap = {
+    '日期':'date','標題':'title','來源媒體':'source','新聞網址':'url',
+    '情感':'sentiment','分類':'category','優先級':'priority','平台':'platform',
+    '關鍵字':'keyword','摘要':'summary','AI澄清文字':'line_message'
+  };
+  return rawHeaders.map(function(h) {
+    var key = colMap[h] || h;
+    if (key === 'date') {
+      return normalizeDate_(item.pub_date || item.published || item.date || '') || '';
+    }
+    var v = item[key];
+    if (v == null) return '';
+    if (typeof v === 'object') return JSON.stringify(v);
+    return v;
+  });
 }
 
 // ─────────────────────────────────────────────────────────
@@ -53,7 +74,7 @@ function doGet(e) {
 
     if (!action || action === 'status') {
       return ContentService
-        .createTextOutput(JSON.stringify({status:'ok', message:'Water Monitor Sheets API v15'}))
+        .createTextOutput(JSON.stringify({status:'ok', message:'Water Monitor Sheets API v16'}))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -65,7 +86,7 @@ function doGet(e) {
 
       const lastCol = sheet.getLastColumn();
       const rawHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h).trim());
-      const headers    = mapHeaders_(rawHeaders);   // 中文→英文
+      const headers    = mapHeaders_(rawHeaders);
       const rows       = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
 
       const items = rows.map(row => {
@@ -79,7 +100,7 @@ function doGet(e) {
       cutoff.setDate(cutoff.getDate() - 90);
       const cutoffStr = Utilities.formatDate(cutoff, 'Asia/Taipei', 'yyyy-MM-dd');
 
-      // 依實際發布日分組（pub_date → published → date）
+      // 依實際發布日分組
       const monitorData = {};
       items.forEach(item => {
         const date = normalizeDate_(item.pub_date || item.published || item.date || '');
@@ -232,7 +253,7 @@ function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
 
-    // action=batchUpdateDates：批次將「日期」欄位更新為實際發布日
+    // ── action=batchUpdateDates：批次更新「日期」欄位為實際發布日 ──
     if (payload.action === 'batchUpdateDates') {
       const ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
       const sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
@@ -248,12 +269,10 @@ function doPost(e) {
         return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到日期或網址欄位'})).setMimeType(ContentService.MimeType.JSON);
       }
 
-      // 建立 URL → pub_date 對照表
       const updates = payload.updates || [];
       const urlMap  = {};
       updates.forEach(u => { if (u.url && u.pub_date) urlMap[String(u.url)] = String(u.pub_date); });
 
-      // 一次讀取所有 URL 和日期
       const urlValues  = sheet.getRange(2, urlCol,  lastRow-1, 1).getValues();
       const dateValues = sheet.getRange(2, dateCol, lastRow-1, 1).getValues();
 
@@ -272,11 +291,69 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({status:'ok', updated})).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // 預設：寫入每日新聞
+    // ── action=deduplicateAll：清除重複行，以 URL 為唯一鍵，保留最後一筆 ──
+    // 策略：一次讀取全部 → 記憶體去重 → 清除 → 一次寫回（速度快，避免逐行 deleteRow）
+    if (payload.action === 'deduplicateAll') {
+      const ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
+      const sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 3) {
+        return ContentService.createTextOutput(JSON.stringify({status:'ok', deleted:0, message:'無重複行需清理'})).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const lastCol    = sheet.getLastColumn();
+      const rawHeaders = sheet.getRange(1,1,1,lastCol).getValues()[0].map(h=>String(h).trim());
+      const headers    = mapHeaders_(rawHeaders);
+      const urlColIdx  = headers.indexOf('url');  // 0-indexed
+
+      if (urlColIdx < 0) {
+        return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到 url 欄位'})).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // 一次讀取所有資料列
+      const allValues = sheet.getRange(2, 1, lastRow-1, lastCol).getValues();
+      const totalBefore = allValues.length;
+
+      // 以 URL 為主鍵，保留最後出現的那筆（最新分析結果）
+      const urlToLastRow = {};  // url → row data
+      const noUrlRows = [];     // 沒有 URL 的列保留
+
+      allValues.forEach(function(row) {
+        const url = String(row[urlColIdx] || '').trim();
+        if (url) {
+          urlToLastRow[url] = row;  // 後者覆蓋前者 = 保留最後一筆
+        } else {
+          noUrlRows.push(row);
+        }
+      });
+
+      const uniqueRows = Object.values(urlToLastRow).concat(noUrlRows);
+      const deleted = totalBefore - uniqueRows.length;
+
+      // 清除現有資料（保留第 1 列表頭）
+      if (lastRow > 1) {
+        sheet.getRange(2, 1, lastRow-1, lastCol).clearContent();
+      }
+
+      // 一次寫回所有去重後的列
+      if (uniqueRows.length > 0) {
+        sheet.getRange(2, 1, uniqueRows.length, lastCol).setValues(uniqueRows);
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: 'ok',
+        deleted: deleted,
+        total_before: totalBefore,
+        total_after: uniqueRows.length
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ── 預設：真正的 UPSERT（以 URL 為主鍵，更新已存在的列 OR 新增）──
     const items = payload.items || [];
     const ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
     const sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
 
+    // 初始化表頭（若表格為空）
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(['id','title','url','source','published','pub_date','content',
         'keyword','category','priority','platform','feed_source',
@@ -284,40 +361,44 @@ function doPost(e) {
     }
 
     const rawHeaders = sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(h=>String(h).trim());
-    const headers    = mapHeaders_(rawHeaders);   // 中英文皆可讀
+    const headers    = mapHeaders_(rawHeaders);
+    const urlColIdx  = headers.indexOf('url');  // 0-indexed
 
-    // 去重：讀現有 URL 集合（同標題+來源視為重複）
-    const existingIds = new Set();
-    if (sheet.getLastRow() > 1) {
-      const idIdx = headers.indexOf('id');
-      const urlIdx = headers.indexOf('url');
-      if (idIdx >= 0 || urlIdx >= 0) {
-        const colIdx = idIdx >= 0 ? idIdx : urlIdx;
-        sheet.getRange(2, colIdx+1, sheet.getLastRow()-1, 1)
-             .getValues().forEach(r => { if (r[0]) existingIds.add(String(r[0])); });
-      }
+    // 建立 URL → 行號 對照表（1-indexed，row 1 是表頭）
+    const urlToRowNum = {};
+    if (sheet.getLastRow() > 1 && urlColIdx >= 0) {
+      const existingUrls = sheet.getRange(2, urlColIdx+1, sheet.getLastRow()-1, 1).getValues();
+      existingUrls.forEach(function(r, i) {
+        const u = String(r[0] || '').trim();
+        if (u && !urlToRowNum[u]) {
+          urlToRowNum[u] = i + 2;  // +2：表頭佔第 1 列，i 從 0 開始
+        }
+      });
     }
 
-    let added = 0;
-    items.forEach(item => {
-      const id = String(item.id || item.url || '');
-      if (id && existingIds.has(id)) return;
-      const row = rawHeaders.map(h => {
-        const englishKey = ({'日期':'date','標題':'title','來源媒體':'source','新聞網址':'url',
-                             '情感':'sentiment','分類':'category','優先級':'priority','平台':'platform',
-                             '關鍵字':'keyword','摘要':'summary','AI澄清文字':'line_message'})[h] || h;
-        if (englishKey === 'date') {
-          return normalizeDate_(item.pub_date || item.published || item.date || '') || '';
-        }
-        const v = item[englishKey];
-        return v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v);
-      });
-      sheet.appendRow(row);
-      if (id) existingIds.add(id);
-      added++;
+    let added = 0, updated = 0;
+    items.forEach(function(item) {
+      const url    = String(item.url || '').trim();
+      const row    = buildRow_(rawHeaders, item);
+
+      if (url && urlToRowNum[url]) {
+        // 更新已存在的列
+        sheet.getRange(urlToRowNum[url], 1, 1, rawHeaders.length).setValues([row]);
+        updated++;
+      } else {
+        // 新增
+        sheet.appendRow(row);
+        if (url) urlToRowNum[url] = sheet.getLastRow();
+        added++;
+      }
     });
 
-    return ContentService.createTextOutput(JSON.stringify({status:'ok', count:added})).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({
+      status: 'ok',
+      added: added,
+      updated: updated,
+      count: added + updated
+    })).setMimeType(ContentService.MimeType.JSON);
 
   } catch(err) {
     return ContentService.createTextOutput(JSON.stringify({status:'error', message:err.toString()})).setMimeType(ContentService.MimeType.JSON);

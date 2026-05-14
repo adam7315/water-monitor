@@ -11,7 +11,7 @@ from zoneinfo import ZoneInfo
 _TW = ZoneInfo('Asia/Taipei')
 TODAY    = datetime.now(_TW).date().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
-MAX_ITEMS = 200  # 由 30 提升至 200，避免截斷重要新聞
+MAX_ITEMS = 300  # 由 200 提升至 300，確保國際類有足夠空間
 
 # ── 封鎖垃圾/非新聞網域（與 collect_news.py 保持一致）──────
 DOMAIN_BLACKLIST = {
@@ -180,10 +180,26 @@ def main():
              if not _is_old_nonneg(x) or _quick_sentiment(x) == "負面"]
     print(f"舊文非負面過濾後：{len(items)} 則（移除 {before_old - len(items)} 篇）")
 
-    # 3. 依類別優先排序，取前 MAX_ITEMS
+    # 3. 每類別保留配額，再合併排序（確保國際類不被截掉）
+    CATEGORY_QUOTA = {"海淡廠": 50, "社群輿情": 30, "南部水資源": 100, "全台水資源": 80, "國際": 80}
+    by_cat: dict = {}
+    for item in items:
+        c = item.get("category", "全台水資源")
+        by_cat.setdefault(c, []).append(item)
+
+    selected = []
+    for cat, quota in CATEGORY_QUOTA.items():
+        cat_items = by_cat.get(cat, [])
+        selected.extend(cat_items[:quota])
+    # 其他未分類
+    for cat, cat_items in by_cat.items():
+        if cat not in CATEGORY_QUOTA:
+            selected.extend(cat_items[:20])
+
+    # 依優先級排序後取 MAX_ITEMS
     priority_map = {"海淡廠": 1, "社群輿情": 2, "南部水資源": 2, "全台水資源": 3, "國際": 4}
-    items.sort(key=lambda x: priority_map.get(x.get("category", ""), 5))
-    items = items[:MAX_ITEMS]
+    selected.sort(key=lambda x: priority_map.get(x.get("category", ""), 5))
+    items = selected[:MAX_ITEMS]
 
     print(f"=== 分析 {len(items)} 則新聞（最多 {MAX_ITEMS}）===")
 

@@ -1,15 +1,16 @@
 """
 每日新聞與社群媒體蒐集腳本
 來源：
-  1. Google News RSS（關鍵字逐一查詢）
-  2. 直接台灣新聞源 RSS（中央社、聯合、自由、ETtoday、公視、東森、TVBS、三立）
-  3. 國際新聞源 RSS（BBC / Global Times / Xinhua / Japan Times / 香港電台 / 香港01 / 聯合早報）
-  4. PTT RSS
-  5. Dcard API（實驗性）
-  6. Google Custom Search（FB/IG/Dcard）
-  7. NewsData.io API（若設定 API key）
+  1. Google News RSS（關鍵字逐一查詢，附 after: 日期限制）
+  2. 直接台灣新聞源 RSS（水利署官方、中央社、聯合、自由、ETtoday、公視、東森、TVBS、三立）
+  3. 台灣環境資訊協會水資源 RSS（e-info.org.tw）
+  4. 國際新聞源 RSS（BBC / Global Times / Xinhua / Japan Times / 香港電台 / 香港01 / 聯合早報）
+  5. PTT RSS
+  6. Dcard API（實驗性）
+  7. Google Custom Search（FB/IG/Dcard）
+  8. NewsData.io API（若設定 API key）
 """
-import json, os, hashlib, time
+import json, os, re, hashlib, time
 from datetime import date, timedelta, datetime
 from zoneinfo import ZoneInfo
 from urllib.parse import quote, urlparse
@@ -48,32 +49,57 @@ def is_junk_url(url: str) -> bool:
         # LINE TODAY 討論牆（無實際新聞內容）
         if "today.line.me" in domain and "/discuss/" in parsed.path:
             return True
-        # 標題含美食/旅遊關鍵字的 Google News 結果
     except Exception:
         pass
     return False
 
-def is_recent(entry) -> bool:
-    pp = entry.get("published_parsed")
-    if pp:
+def extract_url_date(url: str):
+    """從 URL 字串萃取日期（如 /2026/05/14/ 或 /20260514），找不到回傳 None"""
+    m = re.search(r'/(20\d{2})[/-]?(\d{2})[/-]?(\d{2})', url)
+    if m:
         try:
-            pub = date(pp[0], pp[1], pp[2])
-            return pub >= CUTOFF_DATE
-        except Exception:
+            return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
             pass
-    return True  # 無日期則放行
+    return None
+
+def is_recent(entry, strict: bool = False) -> bool:
+    """回傳 True 表示文章夠新。strict=True 時無日期就拒絕（用於 CSE）"""
+    for key in ("published_parsed", "updated_parsed"):
+        pp = entry.get(key)
+        if pp:
+            try:
+                pub = date(pp[0], pp[1], pp[2])
+                return pub >= CUTOFF_DATE
+            except Exception:
+                pass
+    # 嘗試從 date string 解析
+    pub_str = entry.get("_pub_date_str", "")
+    if pub_str:
+        try:
+            return date.fromisoformat(pub_str) >= CUTOFF_DATE
+        except ValueError:
+            pass
+    return not strict
 
 def get_pub_date(entry) -> str:
     """從 feedparser entry 取出 YYYY-MM-DD 格式的發布日期（台灣時區）"""
-    pp = entry.get("published_parsed")
-    if pp:
-        try:
-            return date(pp[0], pp[1], pp[2]).isoformat()
-        except Exception:
-            pass
+    for key in ("published_parsed", "updated_parsed"):
+        pp = entry.get(key)
+        if pp:
+            try:
+                return date(pp[0], pp[1], pp[2]).isoformat()
+            except Exception:
+                pass
     published = entry.get("published", "")
     if published and len(published) >= 10:
         return published[:10]
+    # 嘗試從 URL 萃取日期
+    link = entry.get("link", "")
+    if link:
+        d = extract_url_date(link)
+        if d:
+            return d.isoformat()
     return datetime.now(_TW).date().isoformat()
 
 # ── 關鍵字分組 ─────────────────────────────────────────────
@@ -109,10 +135,13 @@ KEYWORDS = {
     ],
     # 國際海水淡化
     "國際": [
+        # 英文（Google News 英文搜尋，加 after: 效果好）
         "desalination plant", "seawater desalination",
         "water desalination technology", "reverse osmosis plant",
         "desalination water crisis", "global desalination",
-        "desalination Taiwan",
+        "desalination Taiwan", "Taiwan water shortage",
+        # 中文（不加 after:，靠 is_recent 過濾）
+        "科威特 海水淡化", "伊朗 海水淡化廠", "中東 海水淡化",
         "海水淡化 國際", "全球海水淡化", "海水淡化 技術",
         "再造水", "中水回用", "海水淡化 香港", "海水淡化 中國",
     ],
@@ -125,6 +154,11 @@ PRIORITY = {"海淡廠": 1, "南部水資源": 2, "全台水資源": 3, "國際"
 
 # ── 直接新聞源 RSS ──────────────────────────────────────────
 DIRECT_RSS_FEEDS = [
+    # 水利署官網（政府主管機關，海淡廠政策/工程/公告直接來源）
+    {"url": "https://www.wra.gov.tw/OpenData.aspx?SN=20C1A3DAF6A74FCE", "source": "水利署",     "platform": "官方"},
+    {"url": "https://www.wra.gov.tw/OpenData.aspx?SN=CA60F31A88AF3736", "source": "水利署政策", "platform": "官方"},
+    # 台灣環境資訊協會 — 水資源專題（精準涵蓋台灣水資源環境新聞）
+    {"url": "https://e-info.org.tw/taxonomy/term/63/feed", "source": "台灣環境資訊協會", "platform": "環保媒體"},
     # 中央社
     {"url": "https://feeds.feedburner.com/rsscna/social",     "source": "中央社", "platform": "新聞"},
     {"url": "https://feeds.feedburner.com/rsscna/lifehealth", "source": "中央社", "platform": "新聞"},
@@ -193,10 +227,14 @@ def match_keywords(text: str) -> tuple:
 # ── 1. Google News RSS ────────────────────────────────────────
 def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
     q = quote(keyword)
+    # after: 參數確保只搜近期文章（避免 Google News 翻出舊文）
+    after_date = CUTOFF_DATE.isoformat()
     is_en = all(ord(c) < 128 for c in keyword.replace(' ', ''))
     if is_en:
-        url = f"https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en"
+        # 英文查詢加 after: 日期限制，效果穩定
+        url = f"https://news.google.com/rss/search?q={q}+after:{after_date}&hl=en-US&ceid=US:en"
     else:
+        # 中文查詢不加 after:（Google News 中文版對此參數不穩定），靠 is_recent() 過濾
         url = f"https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     items = []
     try:
@@ -206,6 +244,10 @@ def fetch_google_news_rss(keyword: str, category: str, priority: int) -> list:
                 continue
             link = entry.get("link", "")
             if is_junk_url(link):
+                continue
+            # URL 日期二次驗證（Google News 有時帶舊文）
+            url_date = extract_url_date(link)
+            if url_date and url_date < CUTOFF_DATE:
                 continue
             # 過濾標題含美食/旅遊符號的文章
             title = entry.get("title", "")

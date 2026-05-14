@@ -30,15 +30,18 @@ jobs:
         env:
           GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
           GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
-        run: python scripts/collect_news-1.py
+          SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
+        run: python scripts/collect_news.py
 
       - name: Analyze sentiment
-        run: python scripts/analyze-1.py
+        run: python scripts/analyze.py
 
       - name: Build dashboard
         run: python scripts/build_dashboard.py
 
       - name: Sync to Google Sheets
+        env:
+          SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
         run: python scripts/sync_to_sheets.py
 
       - name: Commit and push
