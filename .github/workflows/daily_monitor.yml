@@ -30,10 +30,10 @@ jobs:
         env:
           GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
           GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
-        run: python scripts/collect_news.py
+        run: python scripts/collect_news-1.py
 
       - name: Analyze sentiment
-        run: python scripts/analyze.py
+        run: python scripts/analyze-1.py
 
       - name: Build dashboard
         run: python scripts/build_dashboard.py
