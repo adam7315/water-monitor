@@ -25,8 +25,8 @@ def main():
     if not items:
         print("無資料可同步"); return
 
-    # 最新的新聞排在最前面
-    items = sorted(items, key=lambda x: x.get("date", x.get("published", "")), reverse=True)
+    # 最新的新聞排在最前面（依實際發布日）
+    items = sorted(items, key=lambda x: x.get("pub_date") or x.get("date") or x.get("published", ""), reverse=True)
 
     payload = {"type": "daily", "items": items}
     try:

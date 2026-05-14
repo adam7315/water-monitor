@@ -15,6 +15,22 @@
  */
 
 // ─────────────────────────────────────────────────────────
+//  工具函式：將各種日期格式統一轉為 YYYY-MM-DD
+// ─────────────────────────────────────────────────────────
+function normalizeDate_(s) {
+  if (!s) return '';
+  var str = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+  try {
+    var d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return Utilities.formatDate(d, 'Asia/Taipei', 'yyyy-MM-dd');
+    }
+  } catch(ex) {}
+  return '';
+}
+
+// ─────────────────────────────────────────────────────────
 //  GET：讓網頁讀取 Sheets 裡全部新聞資料
 // ─────────────────────────────────────────────────────────
 function doGet(e) {
@@ -55,11 +71,10 @@ function doGet(e) {
       cutoff.setDate(cutoff.getDate() - 90);
       const cutoffStr = Utilities.formatDate(cutoff, 'Asia/Taipei', 'yyyy-MM-dd');
 
-      // 依日期分組 → MONITOR_DATA 格式
+      // 依「實際發布日」分組（pub_date → published → date）→ MONITOR_DATA 格式
       const monitorData = {};
       items.forEach(item => {
-        const rawDate = item.date || item.published || '';
-        const date = String(rawDate).slice(0, 10);
+        const date = normalizeDate_(item.pub_date || item.published || item.date || '');
         if (!date || date < cutoffStr) return;
 
         if (!monitorData[date]) {
@@ -106,6 +121,39 @@ function doGet(e) {
 
       return ContentService
         .createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // action=fixDates → 一次性補正 date 欄位為實際發布日（從 pub_date 或 published 解析）
+    if (action === 'fixDates') {
+      const ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
+      const sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) {
+        return ContentService.createTextOutput(JSON.stringify({status:'ok', updated:0}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      const lastCol = sheet.getLastColumn();
+      const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h).trim());
+      const dateCol     = headers.indexOf('date') + 1;
+      const pubDateCol  = headers.indexOf('pub_date') + 1;
+      const publishedCol= headers.indexOf('published') + 1;
+      if (dateCol === 0) {
+        return ContentService.createTextOutput(JSON.stringify({status:'error', message:'date欄位不存在'}))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      const allRows = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+      let updated = 0;
+      allRows.forEach((row, i) => {
+        const pubDate   = pubDateCol  > 0 ? String(row[pubDateCol-1]  || '') : '';
+        const published = publishedCol > 0 ? String(row[publishedCol-1] || '') : '';
+        const newDate = normalizeDate_(pubDate || published || '');
+        if (newDate && newDate !== String(row[dateCol-1]).slice(0,10)) {
+          sheet.getRange(i + 2, dateCol).setValue(newDate);
+          updated++;
+        }
+      });
+      return ContentService.createTextOutput(JSON.stringify({status:'ok', updated}))
         .setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -229,7 +277,7 @@ function doPost(e) {
     // 若空表，先建標題列
     if (sheet.getLastRow() === 0) {
       const headers = [
-        'id','title','url','source','published','content',
+        'id','title','url','source','published','pub_date','content',
         'keyword','category','priority','platform','feed_source',
         'sentiment','summary','is_credible_threat','line_message','date'
       ];
@@ -254,6 +302,10 @@ function doPost(e) {
       const id = String(item.id || '');
       if (id && existingIds.has(id)) return; // 跳過重複
       const row = headers.map(h => {
+        if (h === 'date') {
+          // date 欄位儲存實際發布日，優先 pub_date → published → date
+          return normalizeDate_(item.pub_date || item.published || item.date || '') || '';
+        }
         const v = item[h];
         return v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : v);
       });
