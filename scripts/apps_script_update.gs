@@ -400,7 +400,7 @@ function doPost(e) {
 
     // 初始化表頭（若表格為空）
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(['id','title','url','source','published','pub_date','content',
+      sheet.appendRow(['published','title','source','url','id','pub_date','content',
         'keyword','category','priority','platform','feed_source',
         'sentiment','summary','is_credible_threat','line_message','date']);
     }
