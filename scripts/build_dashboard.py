@@ -486,8 +486,16 @@ function showToast(msg) {
 ══════════════════════════════════════════ */
 function normalizeDate(s) {
   if (!s) return '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
-  try { const d = new Date(s); if (!isNaN(d)) return d.toISOString().slice(0,10); } catch(e) {}
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;  // already YYYY-MM-DD
+  try {
+    const d = new Date(s);
+    if (!isNaN(d)) {
+      // Convert UTC to Taiwan time (UTC+8) before slicing date
+      const tw = new Date(d.getTime() + 8 * 3600 * 1000);
+      return tw.toISOString().slice(0, 10);
+    }
+  } catch(e) {}
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
   return '';
 }
 

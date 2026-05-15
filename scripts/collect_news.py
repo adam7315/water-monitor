@@ -11,7 +11,7 @@
   8. NewsData.io API（若設定 API key）
 """
 import json, os, re, hashlib, time
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta, datetime, timezone
 from zoneinfo import ZoneInfo
 from urllib.parse import quote, urlparse
 import feedparser
@@ -63,6 +63,47 @@ def extract_url_date(url: str):
             pass
     return None
 
+def _resolve_redirect(url: str) -> str:
+    """Follow redirect chain and return final URL. Falls back to input URL on failure."""
+    try:
+        r = requests.head(url, allow_redirects=True, timeout=6,
+                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+        final = r.url
+        if "google.com" not in final and final.startswith("http"):
+            return final
+    except Exception:
+        pass
+    return url
+
+def _scrape_pub_date(url: str) -> str:
+    """Fetch article page and extract publication date from meta tags or JSON-LD. Returns YYYY-MM-DD or ''."""
+    try:
+        r = requests.get(url, timeout=8, stream=True,
+                        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+        raw = b''
+        for chunk in r.iter_content(4096):
+            raw += chunk
+            if len(raw) > 40960:  # 40KB covers <head> section
+                break
+        html = raw.decode('utf-8', errors='ignore')
+        # article:published_time meta (most common standard)
+        m = re.search(r'property=["\']article:published_time["\'][^>]+content=["\']([0-9T:Z+\-.]{10,})', html)
+        if not m:
+            m = re.search(r'content=["\']([0-9T:Z+\-.]{10,})["\'][^>]+property=["\']article:published_time["\']', html)
+        if m:
+            return m.group(1)[:10]
+        # JSON-LD datePublished
+        m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', html)
+        if m:
+            return m.group(1)
+        # publishDate (some CMS use this)
+        m = re.search(r'"publishDate"\s*:\s*"(\d{4}-\d{2}-\d{2})', html)
+        if m:
+            return m.group(1)
+    except Exception:
+        pass
+    return ''
+
 def is_recent(entry, strict: bool = False) -> bool:
     """回傳 True 表示文章夠新。strict=True 時無日期就拒絕（用於 CSE）"""
     for key in ("published_parsed", "updated_parsed"):
@@ -83,19 +124,56 @@ def is_recent(entry, strict: bool = False) -> bool:
     return not strict
 
 def get_pub_date(entry) -> str:
-    """從 feedparser entry 取出 YYYY-MM-DD 格式的發布日期（台灣時區）"""
+    """從 feedparser entry 取出 YYYY-MM-DD 格式的發布日期（台灣時區）。
+    Google News 的 published_parsed 是 Google 的索引日期（非原始發布日），
+    因此對 Google News URL 另外追蹤重導向並抓取文章頁面取得真實發布日。
+    """
+    link = entry.get("link", "")
+
+    if "news.google.com" in link:
+        # 步驟1：追蹤重導向取得真實文章 URL
+        real_url = _resolve_redirect(link)
+        if real_url != link:
+            # 步驟2：從真實 URL 字串萃取日期（如 /2026/05/10/）
+            d = extract_url_date(real_url)
+            if d:
+                return d.isoformat()
+            # 步驟3：抓取文章頁面，從 meta article:published_time 或 JSON-LD 取得日期
+            scraped = _scrape_pub_date(real_url)
+            if scraped:
+                return scraped
+        # 步驟4（後備）：使用 feedparser 的日期（Google 索引日，不精確）
+        for key in ("published_parsed", "updated_parsed"):
+            pp = entry.get(key)
+            if pp:
+                try:
+                    dt_utc = datetime(pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], tzinfo=timezone.utc)
+                    return dt_utc.astimezone(_TW).date().isoformat()
+                except Exception:
+                    pass
+        return datetime.now(_TW).date().isoformat()
+
+    # 非 Google News（直接 RSS 來源）：published_parsed 是正確的發布日期
     for key in ("published_parsed", "updated_parsed"):
         pp = entry.get(key)
         if pp:
             try:
-                return date(pp[0], pp[1], pp[2]).isoformat()
+                # pp 是 UTC time.struct_time，需轉換成台灣時區
+                dt_utc = datetime(pp[0], pp[1], pp[2], pp[3], pp[4], pp[5], tzinfo=timezone.utc)
+                return dt_utc.astimezone(_TW).date().isoformat()
             except Exception:
                 pass
+    # 嘗試解析 published 字串
     published = entry.get("published", "")
-    if published and len(published) >= 10:
-        return published[:10]
+    if published:
+        try:
+            from email.utils import parsedate_to_datetime
+            dt = parsedate_to_datetime(published)
+            return dt.astimezone(_TW).date().isoformat()
+        except Exception:
+            if len(published) >= 10:
+                return published[:10]
     # 嘗試從 URL 萃取日期
-    link = entry.get("link", "")
     if link:
         d = extract_url_date(link)
         if d:
