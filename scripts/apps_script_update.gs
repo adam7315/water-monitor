@@ -1,15 +1,23 @@
 /**
  * 水資源輿情監控系統 — Google Apps Script
- * v16: true upsert by URL + deduplicateAll cleanup action
+ * v18: 修正 Date 物件序列化為 UTC 字串導致前端日期偏移問題；新增 sortByDate 動作
  */
 
 // ─────────────────────────────────────────────────────────
 //  工具：將各種日期格式統一轉為 YYYY-MM-DD（Asia/Taipei）
+//  修正：Date 物件直接用 Utilities.formatDate；純日期字串原樣回傳；
+//        ISO datetime 字串（含 T/Z）一律走時區轉換，不直接截斷
 // ─────────────────────────────────────────────────────────
 function normalizeDate_(s) {
   if (!s) return '';
+  // Date 物件（Sheets getValues() 回傳）→ 直接用台灣時區格式化
+  if (typeof s === 'object') {
+    try { return Utilities.formatDate(s, 'Asia/Taipei', 'yyyy-MM-dd'); } catch(ex) {}
+  }
   var str = String(s).trim();
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+  // 純 YYYY-MM-DD，沒有時間部分 → 直接回傳（無時區問題）
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  // 其他格式（ISO datetime、RFC 822 等）→ 一律解析後轉台灣時區
   try {
     var d = new Date(str);
     if (!isNaN(d.getTime())) {
@@ -93,7 +101,15 @@ function doGet(e) {
         const obj = {};
         headers.forEach((h, i) => { obj[h] = row[i] === '' ? null : row[i]; });
         return obj;
-      }).filter(x => x.title || x.date);
+      }).filter(x => x.title || x.date)
+        .map(item => {
+          // 清洗：Date 物件 → YYYY-MM-DD 台灣日期字串（避免 JSON.stringify 序列化成 UTC ISO 字串）
+          const cleanDate = normalizeDate_(item.pub_date || item.published || item.date || '');
+          item.date     = cleanDate;
+          item.pub_date = cleanDate;  // 確保前端 pub_date 永遠有值
+          if (item.published) item.published = cleanDate;
+          return item;
+        });
 
       // 近 90 天截止日
       const cutoff = new Date();
@@ -220,6 +236,35 @@ function doGet(e) {
       const parts = respData.candidates?.[0]?.content?.parts || [];
       const text = parts.filter(p=>!p.thought).map(p=>p.text||'').join('').trim() || parts.map(p=>p.text||'').join('').trim() || '';
       return ContentService.createTextOutput(JSON.stringify({text})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'sortByDate') {
+      const ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
+      const sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 3) return ContentService.createTextOutput(JSON.stringify({status:'ok', message:'資料不足，無需排序'})).setMimeType(ContentService.MimeType.JSON);
+
+      const lastCol    = sheet.getLastColumn();
+      const rawHeaders = sheet.getRange(1,1,1,lastCol).getValues()[0].map(h=>String(h).trim());
+      const dateColIdx = rawHeaders.indexOf('日期');  // 0-indexed
+      if (dateColIdx < 0) return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到「日期」欄位'})).setMimeType(ContentService.MimeType.JSON);
+
+      // 先將所有日期欄位清洗為純 YYYY-MM-DD 字串，再排序
+      const allValues = sheet.getRange(2,1,lastRow-1,lastCol).getValues();
+      const cleaned = allValues.map(row => {
+        const newRow = row.slice();
+        newRow[dateColIdx] = normalizeDate_(row[dateColIdx]) || '';
+        return newRow;
+      });
+      // 依日期由新到舊排序（降冪）
+      cleaned.sort(function(a, b) {
+        const da = String(a[dateColIdx] || '');
+        const db = String(b[dateColIdx] || '');
+        return db > da ? 1 : db < da ? -1 : 0;
+      });
+      sheet.getRange(2,1,cleaned.length,lastCol).setValues(cleaned);
+
+      return ContentService.createTextOutput(JSON.stringify({status:'ok', sorted:cleaned.length})).setMimeType(ContentService.MimeType.JSON);
     }
 
     if (action === 'headers') {
