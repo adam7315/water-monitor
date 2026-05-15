@@ -20,18 +20,21 @@ SHEETS_API_URL = os.environ.get(
 # ── 主要資料來源：Google Sheets ──────────────────────────────
 def load_from_sheets():
     """從 Google Sheets（主要資料庫）讀取所有輿情資料"""
-    try:
-        resp = requests.get(f"{SHEETS_API_URL}?action=getAll", timeout=30)
-        data = resp.json()
-        monitor_data = data.get("monitor_data", {})
-        # 資料品質檢查：需有至少 5 個日期且有文章
-        valid_dates = [d for d, v in monitor_data.items() if v.get("stats", {}).get("total", 0) > 0]
-        if len(valid_dates) < 5:
-            print(f"  Sheets 資料不足（{len(valid_dates)} 天），改用本機 JSON")
-            return None, None
-        return monitor_data, data
-    except Exception as e:
-        print(f"  Sheets API 讀取失敗：{e}，改用本機 JSON")
+    for attempt in range(1, 4):  # 最多重試 3 次
+        try:
+            resp = requests.get(f"{SHEETS_API_URL}?action=getAll", timeout=90)
+            data = resp.json()
+            monitor_data = data.get("monitor_data", {})
+            # 資料品質檢查：需有至少 5 個日期且有文章
+            valid_dates = [d for d, v in monitor_data.items() if v.get("stats", {}).get("total", 0) > 0]
+            if len(valid_dates) < 5:
+                print(f"  Sheets 資料不足（{len(valid_dates)} 天），改用本機 JSON")
+                return None, None
+            return monitor_data, data
+        except Exception as e:
+            print(f"  Sheets API 第 {attempt} 次讀取失敗：{e}")
+            if attempt == 3:
+                print("  已達最大重試次數，改用本機 JSON")
         return None, None
 
 # ── 備援資料來源：本機 JSON ──────────────────────────────────
