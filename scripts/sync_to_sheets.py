@@ -76,5 +76,13 @@ def main():
 
     print(f"\n同步完成：共新增 {total_added} 筆，更新 {total_updated} 筆 → Google Sheets")
 
+    # 每次寫入後自動排序（日期由新到舊），避免手動排序
+    try:
+        r = requests.get(f"{SHEETS_API_URL}?action=sortByDate", timeout=60)
+        res = r.json()
+        print(f"排序完成：{res.get('sorted', '?')} 列")
+    except Exception as e:
+        print(f"排序呼叫失敗（不影響資料）：{e}")
+
 if __name__ == "__main__":
     main()
