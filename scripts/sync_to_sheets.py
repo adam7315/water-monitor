@@ -43,11 +43,31 @@ def main():
     if not items:
         print("無資料可同步"); return
 
-    # 確保 pub_date 是純 YYYY-MM-DD 字串（非 UTC datetime）
+    # 確保日期欄位是純 YYYY-MM-DD 字串
+    import email.utils, re
+    def to_ymd(s):
+        if not s:
+            return ""
+        s = str(s).strip()
+        if re.match(r'^\d{4}-\d{2}-\d{2}', s):
+            return s[:10]
+        try:
+            return email.utils.parsedate_to_datetime(s).strftime('%Y-%m-%d')
+        except Exception:
+            pass
+        try:
+            from datetime import datetime, timezone
+            d = datetime.fromisoformat(s.replace('Z', '+00:00'))
+            return d.strftime('%Y-%m-%d')
+        except Exception:
+            pass
+        return s[:10] if len(s) >= 10 else s
+
     for item in items:
-        pd = item.get("pub_date", "")
-        if pd and len(pd) >= 10:
-            item["pub_date"] = pd[:10]
+        for field in ("pub_date", "published", "date"):
+            v = item.get(field, "")
+            if v:
+                item[field] = to_ymd(v)
 
     # 最新發布日的新聞排在最前面
     items = sorted(
