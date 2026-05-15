@@ -246,7 +246,7 @@ function doGet(e) {
 
       const lastCol    = sheet.getLastColumn();
       const rawHeaders = sheet.getRange(1,1,1,lastCol).getValues()[0].map(h=>String(h).trim());
-      const dateColIdx = rawHeaders.indexOf('日期');  // 0-indexed
+      const dateColIdx = rawHeaders.indexOf('日期') >= 0 ? rawHeaders.indexOf('日期') : rawHeaders.indexOf('date');  // 支援中英文欄位名
       if (dateColIdx < 0) return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到「日期」欄位'})).setMimeType(ContentService.MimeType.JSON);
 
       // 先將所有日期欄位清洗為純 YYYY-MM-DD 字串，再排序
@@ -448,4 +448,40 @@ function doPost(e) {
   } catch(err) {
     return ContentService.createTextOutput(JSON.stringify({status:'error', message:err.toString()})).setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// ─────────────────────────────────────────────────────────
+//  一次性工具：刪除指定日期的所有列（直接在 Apps Script 編輯器執行）
+// ─────────────────────────────────────────────────────────
+function deleteRowsByDate() {
+  var TARGET = '2026-05-15';
+  var ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
+  var sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { Logger.log('無資料'); return; }
+
+  var lastCol    = sheet.getLastColumn();
+  var rawHeaders = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(function(h){ return String(h).trim(); });
+  var dateColIdx = rawHeaders.indexOf('date');
+  if (dateColIdx < 0) dateColIdx = rawHeaders.indexOf('日期');
+  if (dateColIdx < 0) { Logger.log('找不到日期欄位'); return; }
+
+  var allValues = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+  // 保留非 TARGET 的列
+  var keepRows = allValues.filter(function(row) {
+    var d = normalizeDate_(row[dateColIdx]);
+    return d !== TARGET;
+  });
+
+  var deleted = allValues.length - keepRows.length;
+  Logger.log('刪除: ' + deleted + ' 列，保留: ' + keepRows.length + ' 列');
+
+  // 清除舊資料，寫回保留的列
+  sheet.getRange(2, 1, lastRow - 1, lastCol).clearContent();
+  if (keepRows.length > 0) {
+    sheet.getRange(2, 1, keepRows.length, lastCol).setValues(keepRows);
+  }
+
+  Logger.log('完成。');
 }
