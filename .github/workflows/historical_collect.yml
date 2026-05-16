@@ -1,0 +1,96 @@
+name: Historical News Collection
+
+on:
+  workflow_dispatch:   # 手動觸發
+
+jobs:
+  # ── 6 個月份並行蒐集 ────────────────────────────────────────
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      max-parallel: 6
+      fail-fast: false
+      matrix:
+        range:
+          - {start: '2025-06-17', end: '2025-07-31'}
+          - {start: '2025-08-01', end: '2025-09-30'}
+          - {start: '2025-10-01', end: '2025-11-30'}
+          - {start: '2025-12-01', end: '2026-01-31'}
+          - {start: '2026-02-01', end: '2026-03-31'}
+          - {start: '2026-04-01', end: '2026-05-16'}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Collect historical news
+        env:
+          GOOGLE_CSE_API_KEY: ${{ secrets.GOOGLE_CSE_API_KEY }}
+          GOOGLE_CSE_ID: ${{ secrets.GOOGLE_CSE_ID }}
+          NEWSDATA_API_KEY: ${{ secrets.NEWSDATA_API_KEY }}
+        run: |
+          python scripts/collect_historical.py \
+            --start ${{ matrix.range.start }} \
+            --end ${{ matrix.range.end }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hist-${{ matrix.range.start }}
+          path: data/hist_*.json
+          retention-days: 7
+
+  # ── 合併 + 情感分類 + 同步到 Sheets + 重建儀表板 ────────────
+  process:
+    needs: collect
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create data directory
+        run: mkdir -p data
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: data
+          merge-multiple: true
+
+      - name: Process and sync historical data
+        env:
+          SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
+        run: python scripts/process_historical.py
+
+      - name: Rebuild dashboard
+        env:
+          SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
+        run: python scripts/build_dashboard.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --staged --quiet || git commit -m "歷史資料回填完成 $(date +'%Y-%m-%d')"
+          git push
