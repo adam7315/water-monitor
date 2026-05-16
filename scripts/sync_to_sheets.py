@@ -6,10 +6,8 @@ import json, os, requests
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-SHEETS_API_URL = os.environ.get(
-    "SHEETS_API_URL",
+SHEETS_API_URL = os.environ.get("SHEETS_API_URL") or \
     "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"
-)
 TODAY    = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 BATCH_SIZE = 50  # 每批最多 50 筆，避免 Apps Script timeout

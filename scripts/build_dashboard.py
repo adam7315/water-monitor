@@ -12,10 +12,8 @@ DOCS_DIR = os.path.join(os.path.dirname(__file__), "..", "docs")
 os.makedirs(DOCS_DIR, exist_ok=True)
 TODAY = datetime.now(ZoneInfo('Asia/Taipei')).date().isoformat()
 
-SHEETS_API_URL = os.environ.get(
-    "SHEETS_API_URL",
+SHEETS_API_URL = os.environ.get("SHEETS_API_URL") or \
     "https://script.google.com/macros/s/AKfycbxTvnw8nXbSVc5fRim0nvX6gaLiR3yRVuT2e_faTUh_95hRFJfp5Ts4rC60LqZMrXb-/exec"
-)
 
 # ── 主要資料來源：Google Sheets ──────────────────────────────
 def load_from_sheets():
@@ -35,7 +33,7 @@ def load_from_sheets():
             print(f"  Sheets API 第 {attempt} 次讀取失敗：{e}")
             if attempt == 3:
                 print("  已達最大重試次數，改用本機 JSON")
-        return None, None
+    return None, None
 
 # ── 備援資料來源：本機 JSON ──────────────────────────────────
 def load_from_local_json(days=90):
