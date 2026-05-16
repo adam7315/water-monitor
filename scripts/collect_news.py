@@ -284,7 +284,9 @@ DIRECT_RSS_FEEDS = [
 CSE_API_KEY      = os.environ.get("GOOGLE_CSE_API_KEY", "")
 CSE_ID           = os.environ.get("GOOGLE_CSE_ID", "964c6016fea3947d5")
 NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")
-YOUTUBE_API_KEY  = os.environ.get("YOUTUBE_API_KEY", "")
+YOUTUBE_API_KEY   = os.environ.get("YOUTUBE_API_KEY", "")
+INSTAGRAM_USER    = os.environ.get("INSTAGRAM_USERNAME", "")
+INSTAGRAM_PASS    = os.environ.get("INSTAGRAM_PASSWORD", "")
 TODAY            = datetime.now(_TW).date().isoformat()
 DATA_DIR         = os.path.join(os.path.dirname(__file__), "..", "data")
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -505,6 +507,14 @@ def fetch_instagram_hashtags() -> list:
         download_video_thumbnails=False, download_geotags=False,
         download_comments=False, save_metadata=False, quiet=True,
     )
+    if INSTAGRAM_USER and INSTAGRAM_PASS:
+        try:
+            L.login(INSTAGRAM_USER, INSTAGRAM_PASS)
+            print(f"  Instagram 登入成功：{INSTAGRAM_USER}")
+        except Exception as e:
+            print(f"  Instagram 登入失敗：{e}，嘗試匿名模式")
+    else:
+        print("  未設定 INSTAGRAM_USERNAME/PASSWORD，嘗試匿名模式")
     hashtags = ["海水淡化廠", "台南缺水", "水情", "南水資源", "水庫蓄水", "台南水利", "限水"]
     items = []
     for tag in hashtags:
