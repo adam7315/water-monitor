@@ -243,10 +243,10 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
       <div class="knum text-green-600" id="statPos">-</div>
       <div class="text-xs text-slate-400 mt-1">則正向報導 ↗</div>
     </div>
-    <div class="kpi border-t-4 border-orange-500" onclick="filterHighPriority()" title="點擊查看高優先負面新聞">
-      <div class="text-xs text-slate-400 mb-1.5">高優先</div>
-      <div class="knum text-orange-500" id="statHigh">-</div>
-      <div class="text-xs text-orange-300 mt-1">則待立即處理 ↗</div>
+    <div class="kpi border-t-4 border-blue-500" onclick="scrollToClarify()" title="點擊查看澄清追蹤清單">
+      <div class="text-xs text-slate-400 mb-1.5">澄清追蹤</div>
+      <div class="knum text-blue-600" id="statHigh">-</div>
+      <div class="text-xs text-blue-300 mt-1">則待澄清處理 ↗</div>
     </div>
   </div>
 </div>
@@ -334,8 +334,9 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
 
       <!-- 4 Category Circles -->
       <div class="bg-white rounded-xl shadow-sm p-5 border border-slate-100">
-        <div class="mb-4">
+        <div class="mb-4 flex items-center justify-between">
           <h3 class="font-bold text-slate-700 text-sm">📂 分類總覽（點擊篩選）</h3>
+          <span class="text-xs text-slate-400" id="catRangeLabel">依日期篩選範圍計算</span>
         </div>
         <div class="flex justify-around items-start gap-2 flex-wrap" id="catCircles"></div>
       </div>
@@ -374,6 +375,21 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
               <option value="neg-first">負面優先</option>
               <option value="date-asc">日期舊→新</option>
               <option value="tracked">澄清追蹤</option>
+            </select>
+          </div>
+          <!-- 平台 -->
+          <div>
+            <div class="text-xs text-slate-400 mb-1.5">平台</div>
+            <select id="platFilter"
+              class="border border-slate-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none">
+              <option value="">全部</option>
+              <option value="__social__">社群媒體</option>
+              <option value="PTT">PTT</option>
+              <option value="Dcard">Dcard</option>
+              <option value="FB">Facebook</option>
+              <option value="Instagram">Instagram</option>
+              <option value="新聞">新聞媒體</option>
+              <option value="國際新聞">國際新聞</option>
             </select>
           </div>
           <!-- 關鍵字 -->
@@ -526,13 +542,12 @@ function init() {
     const todayPub = (MONITOR_DATA[latest].items||[]).filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);
     const todayNegC  = todayPub.filter(x=>getSentiment(x)==='負面').length;
     const todayPosC  = todayPub.filter(x=>getSentiment(x)==='正面').length;
-    const todayHighC = todayPub.filter(x=>x.priority==='高').length;
     document.getElementById('statTotal').textContent = todayPub.length;
     document.getElementById('statNeg').textContent   = todayNegC;
     document.getElementById('statPos').textContent   = todayPosC;
-    document.getElementById('statHigh').textContent  = todayHighC;
     document.getElementById('hdrPos').textContent    = todayPosC;
     document.getElementById('hdrNeg').textContent    = todayNegC;
+    updateTrackKPI();
   }
 
   allItemsFlat = [];
@@ -618,6 +633,17 @@ function filterHighPriority() {
   document.getElementById('newsList').scrollIntoView({behavior:'smooth'});
 }
 
+function scrollToClarify() {
+  document.getElementById('clarifyList').closest('.bg-white') ?
+    document.getElementById('clarifyList').closest('.bg-white').scrollIntoView({behavior:'smooth', block:'center'}) :
+    document.getElementById('clarifyList').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+function updateTrackKPI() {
+  const el = document.getElementById('statHigh');
+  if (el) el.textContent = Object.keys(getTracked()).length;
+}
+
 function filterBySentiment(sent) {
   highPriorityOnly = false;
   document.getElementById('sentFilter').value = sent;
@@ -683,10 +709,18 @@ function renderDonut(groupName) {
 ══════════════════════════════════════════ */
 function renderCatCircles() {
   const el = document.getElementById('catCircles');
+  const from = document.getElementById('dateFrom')?.value||'';
+  const to   = document.getElementById('dateTo')?.value||'';
   const counts = {};
   Object.keys(CAT_GROUPS).forEach(g=>{
     const cats = CAT_GROUPS[g].cats;
-    counts[g] = allItemsFlat.filter(x=>cats.includes(x.category||'')).length;
+    counts[g] = allItemsFlat.filter(x=>{
+      if (!cats.includes(x.category||'')) return false;
+      const nd = normalizeDate(x.pub_date||x.published||x.date||'');
+      if (from && nd < from) return false;
+      if (to   && nd > to)   return false;
+      return true;
+    }).length;
   });
 
   el.innerHTML = Object.entries(CAT_GROUPS).map(([name, cfg])=>{
@@ -775,6 +809,7 @@ function renderClarifyList() {
   const empty = document.getElementById('clarifyEmpty');
   const trackedItems = allItemsFlat.filter(x=>tracked[getItemId(x)]);
   document.getElementById('trackCount').textContent = trackedItems.length ? `共${trackedItems.length}則` : '';
+  updateTrackKPI();
 
   if (!trackedItems.length) {
     el.classList.add('hidden'); empty.classList.remove('hidden'); return;
@@ -929,6 +964,7 @@ function applyFilters() {
   const kw     = document.getElementById('searchBox').value.toLowerCase();
   const from   = document.getElementById('dateFrom').value;
   const to     = document.getElementById('dateTo').value;
+  const plat   = document.getElementById('platFilter')?.value||'';
   const tracked = getTracked();
 
   let f = [...allItemsFlat];
@@ -940,6 +976,10 @@ function applyFilters() {
 
   if (sent) f = f.filter(x=>getSentiment(x)===sent);
   if (highPriorityOnly) f = f.filter(x=>x.priority==='高');
+
+  const SOCIAL_PLATFORMS = ['PTT','Dcard','FB','Instagram'];
+  if (plat === '__social__') f = f.filter(x=>SOCIAL_PLATFORMS.includes(x.platform||''));
+  else if (plat) f = f.filter(x=>(x.platform||'')=== plat || (x.platform||'').startsWith(plat));
 
   if (from) f = f.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')>=from);
   if (to)   f = f.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')<=to);
@@ -962,6 +1002,8 @@ function applyFilters() {
 
   // 更新側邊欄圓環（對應當前日期範圍）
   renderDonut(activeCatGroup);
+  // 更新分類圓圈（對應當前日期篩選）
+  renderCatCircles();
   renderPage();
 }
 
