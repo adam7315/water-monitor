@@ -531,7 +531,10 @@ function scrollToClarify() {
 
 function updateTrackKPI() {
   const el = document.getElementById('statHigh');
-  if (el) el.textContent = Object.keys(getTracked()).length;
+  if (el) {
+    const tracked = getTracked();
+    el.textContent = allItemsFlat.filter(x=>tracked[getItemId(x)]).length;
+  }
 }
 
 function filterBySentiment(sent) {
