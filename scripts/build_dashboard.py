@@ -543,15 +543,23 @@ function init() {
     updateTrackKPI();
   }
 
-  // 資料庫範圍（header 顯示）
-  const firstDate = dates[0] || '';
-  const lastDate  = dates[dates.length-1] || '';
+  // 資料庫範圍：掃描全部文章的 pub_date 找最小值（不用蒐集日期 key）
+  let minPubDate = '', maxPubDate = '';
+  Object.values(MONITOR_DATA).forEach(d=>{
+    (d.items||[]).forEach(item=>{
+      const pd = normalizeDate(item.pub_date||item.published||item.date||'');
+      if (pd) {
+        if (!minPubDate || pd < minPubDate) minPubDate = pd;
+        if (!maxPubDate || pd > maxPubDate) maxPubDate = pd;
+      }
+    });
+  });
   const el = document.getElementById('hdrDateRange');
-  if (el && firstDate && lastDate) {
-    el.innerHTML = toROC(firstDate) + '<br>至 ' + toROC(lastDate);
+  if (el && minPubDate) {
+    el.innerHTML = toROC(minPubDate) + '<br>至 ' + toROC(maxPubDate||latest);
   }
   const elT = document.getElementById('hdrTotal');
-  if (elT) elT.textContent = (typeof TOTAL_ALL !== 'undefined' ? TOTAL_ALL : allItemsFlat.length).toLocaleString();
+  if (elT) elT.textContent = (typeof TOTAL_ALL !== 'undefined' ? TOTAL_ALL : 0).toLocaleString();
 
   allItemsFlat = [];
   const _seenIds = new Set();
