@@ -414,43 +414,23 @@ function toROC(s) {
 function getItemId(item){ return item.id || (item.title||'')+(item.published||''); }
 function getSentiment(item){ const c=getCorrections(); return c[getItemId(item)]||item.sentiment||'中立'; }
 
+/* pub_date 最大值 / 最小值 — 所有日期邏輯的唯一依據 */
+function getLatestPubDate() {
+  let d = '';
+  allItemsFlat.forEach(x=>{ const p=normalizeDate(x.pub_date||x.published||x.date||''); if(p&&p>d) d=p; });
+  return d;
+}
+function getMinPubDate() {
+  let d = '';
+  allItemsFlat.forEach(x=>{ const p=normalizeDate(x.pub_date||x.published||x.date||''); if(p&&(!d||p<d)) d=p; });
+  return d;
+}
+
 /* ══════════════════════════════════════════
    初始化
 ══════════════════════════════════════════ */
 function init() {
-  const dates = Object.keys(MONITOR_DATA).sort();
-  const latest = dates[dates.length-1] || '';
-  document.getElementById('latestDateDisplay').textContent = latest;
-  document.getElementById('statsDateLabel').textContent   = latest;
-
-  if (latest && MONITOR_DATA[latest]) {
-    const todayPub = (MONITOR_DATA[latest].items||[]).filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);
-    const todayNegC  = todayPub.filter(x=>getSentiment(x)==='負面').length;
-    const todayPosC  = todayPub.filter(x=>getSentiment(x)==='正面').length;
-    document.getElementById('statTotal').textContent = todayPub.length;
-    document.getElementById('statNeg').textContent   = todayNegC;
-    document.getElementById('statPos').textContent   = todayPosC;
-    updateTrackKPI();
-  }
-
-  // 資料庫範圍：掃描全部文章的 pub_date 找最小值（不用蒐集日期 key）
-  let minPubDate = '', maxPubDate = '';
-  Object.values(MONITOR_DATA).forEach(d=>{
-    (d.items||[]).forEach(item=>{
-      const pd = normalizeDate(item.pub_date||item.published||item.date||'');
-      if (pd) {
-        if (!minPubDate || pd < minPubDate) minPubDate = pd;
-        if (!maxPubDate || pd > maxPubDate) maxPubDate = pd;
-      }
-    });
-  });
-  const el = document.getElementById('hdrDateRange');
-  if (el && minPubDate) {
-    el.innerHTML = toROC(minPubDate) + '<br>至 ' + toROC(maxPubDate||latest);
-  }
-  const elT = document.getElementById('hdrTotal');
-  if (elT) elT.textContent = (typeof TOTAL_ALL !== 'undefined' ? TOTAL_ALL : 0).toLocaleString();
-
+  // ① 先建立 allItemsFlat（後面所有日期邏輯都以 pub_date 為準）
   allItemsFlat = [];
   const _seenIds = new Set();
   Object.values(MONITOR_DATA).forEach(d=>{
@@ -460,14 +440,31 @@ function init() {
     });
   });
 
-  // 預設日期範圍：近30天
-  if (dates.length) {
-    const thirtyBack = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
-    document.getElementById('dateFrom').value = thirtyBack < dates[0] ? dates[0] : thirtyBack;
-    document.getElementById('dateTo').value   = latest;
-  }
-  // 預設排序：日期新→舊
-  document.getElementById('sortBy').value = 'date-desc';
+  // ② 最新/最舊 pub_date（唯一日期依據）
+  const latest   = getLatestPubDate();
+  const earliest = getMinPubDate();
+
+  document.getElementById('latestDateDisplay').textContent = latest;
+  document.getElementById('statsDateLabel').textContent   = latest;
+
+  // ③ 今日 KPI — 用 pub_date 篩選，不依賴 MONITOR_DATA key
+  const todayItems = allItemsFlat.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);
+  document.getElementById('statTotal').textContent = todayItems.length;
+  document.getElementById('statNeg').textContent   = todayItems.filter(x=>getSentiment(x)==='負面').length;
+  document.getElementById('statPos').textContent   = todayItems.filter(x=>getSentiment(x)==='正面').length;
+  updateTrackKPI();
+
+  // ④ Header 資料庫範圍
+  const elR = document.getElementById('hdrDateRange');
+  if (elR && earliest) elR.innerHTML = toROC(earliest) + '<br>至 ' + toROC(latest);
+  const elT = document.getElementById('hdrTotal');
+  if (elT) elT.textContent = (typeof TOTAL_ALL !== 'undefined' ? TOTAL_ALL : allItemsFlat.length).toLocaleString();
+
+  // ⑤ 預設日期篩選：近30天（以 pub_date 最大值往回推）
+  const thirtyBack = new Date(new Date(latest+'T00:00:00').getTime()-30*86400000).toISOString().slice(0,10);
+  document.getElementById('dateFrom').value = (earliest && thirtyBack < earliest) ? earliest : thirtyBack;
+  document.getElementById('dateTo').value   = latest;
+  document.getElementById('sortBy').value   = 'date-desc';
 
   renderCatCircles();
   renderKwRanking();
@@ -481,8 +478,7 @@ function init() {
 ══════════════════════════════════════════ */
 function filterToday(sent) {
   highPriorityOnly = false;
-  const dates = Object.keys(MONITOR_DATA).sort();
-  const latest = dates[dates.length-1]||'';
+  const latest = getLatestPubDate();
   document.getElementById('dateFrom').value   = latest;
   document.getElementById('dateTo').value     = latest;
   document.getElementById('sentFilter').value = sent;
@@ -520,8 +516,7 @@ function fpTrack(id, idx) {
 }
 
 function filterHighPriority() {
-  const dates = Object.keys(MONITOR_DATA).sort();
-  const latest = dates[dates.length-1]||'';
+  const latest = getLatestPubDate();
   document.getElementById('dateFrom').value   = latest;
   document.getElementById('dateTo').value     = latest;
   document.getElementById('sentFilter').value = '負面';
@@ -557,10 +552,10 @@ function filterBySentiment(sent) {
 
 function resetHome() {
   highPriorityOnly = false;
-  const dates = Object.keys(MONITOR_DATA).sort();
-  const latest = dates[dates.length-1]||'';
-  const thirtyBack = new Date(Date.now()-30*86400000).toISOString().slice(0,10);
-  document.getElementById('dateFrom').value   = thirtyBack < dates[0] ? dates[0] : thirtyBack;
+  const latest   = getLatestPubDate();
+  const earliest = getMinPubDate();
+  const thirtyBack = new Date(new Date(latest+'T00:00:00').getTime()-30*86400000).toISOString().slice(0,10);
+  document.getElementById('dateFrom').value   = (earliest && thirtyBack < earliest) ? earliest : thirtyBack;
   document.getElementById('dateTo').value     = latest;
   document.getElementById('sentFilter').value = '';
   document.getElementById('sortBy').value     = 'date-desc';
@@ -652,7 +647,7 @@ function selectCat(name, el) {
    今日負面輿情（取代今日緊急預警）
 ══════════════════════════════════════════ */
 function renderTodayNeg(latest) {
-  const items = (MONITOR_DATA[latest]?.items||[]).filter(x=>getSentiment(x)==='負面' && normalizeDate(x.pub_date||x.published||x.date||'')===latest);
+  const items = allItemsFlat.filter(x=>getSentiment(x)==='負面' && normalizeDate(x.pub_date||x.published||x.date||'')===latest);
   const el = document.getElementById('todayNegList');
   const countEl = document.getElementById('todayNegCount');
   if (!items.length) {
