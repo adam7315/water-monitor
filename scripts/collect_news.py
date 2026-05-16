@@ -577,7 +577,11 @@ def fetch_newsdata(keyword: str, category: str, priority: int) -> list:
 # ── 主程式 ────────────────────────────────────────────────────
 def main():
     all_items = []
-    print(f"=== 開始蒐集 {TODAY}（收錄 {MAX_AGE_DAYS} 天內新聞）===")
+    trigger_time = datetime.now(_TW).strftime('%Y-%m-%d %H:%M')
+    trigger_path = os.path.join(DATA_DIR, "trigger_time.txt")
+    with open(trigger_path, "w", encoding="utf-8") as f:
+        f.write(trigger_time)
+    print(f"=== 開始蒐集 {TODAY}（收錄 {MAX_AGE_DAYS} 天內新聞）=== 觸發時間 {trigger_time}")
 
     # 1. Google News RSS（關鍵字查詢）
     for category, keywords in KEYWORDS.items():

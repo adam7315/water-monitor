@@ -91,7 +91,12 @@ def main():
         total_all       = sum(d.get("stats", {}).get("total", 0) for d in all_data.values())
         total_neg_all   = sum(d.get("stats", {}).get("negative", 0) for d in all_data.values())
 
-    last_updated = datetime.now(ZoneInfo('Asia/Taipei')).strftime('%Y-%m-%d %H:%M')
+    trigger_path = os.path.join(DATA_DIR, "trigger_time.txt")
+    if os.path.exists(trigger_path):
+        with open(trigger_path, encoding="utf-8") as _f:
+            last_updated = _f.read().strip()
+    else:
+        last_updated = datetime.now(ZoneInfo('Asia/Taipei')).strftime('%Y-%m-%d %H:%M')
     data_js = (
         f"const MONITOR_DATA = {json.dumps(all_data, ensure_ascii=False)};\n"
         f"const TODAY = '{TODAY}';\n"
