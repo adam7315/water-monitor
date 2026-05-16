@@ -1,6 +1,6 @@
 /**
  * 水資源輿情監控系統 — Google Apps Script
- * v20: sortByDate 支援 published/date/日期；fixPublished 統一 published 為台灣時區日期
+ * v21: 移除 getAll 90天截止限制，改為全量回傳所有歷史資料
  */
 
 // ─────────────────────────────────────────────────────────
@@ -111,16 +111,11 @@ function doGet(e) {
           return item;
         });
 
-      // 近 90 天截止日
-      const cutoff = new Date();
-      cutoff.setDate(cutoff.getDate() - 90);
-      const cutoffStr = Utilities.formatDate(cutoff, 'Asia/Taipei', 'yyyy-MM-dd');
-
-      // 依實際發布日分組
+      // 全量回傳，不設截止日（長期蒐集）
       const monitorData = {};
       items.forEach(item => {
         const date = normalizeDate_(item.pub_date || item.published || item.date || '');
-        if (!date || date < cutoffStr) return;
+        if (!date) return;
         if (!monitorData[date]) {
           monitorData[date] = {
             stats: {total:0, positive:0, negative:0, neutral:0, high_priority:0, date},
