@@ -198,15 +198,10 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
           <div class="text-blue-300 text-xs mb-0.5">最新資料</div>
           <div class="text-white font-bold text-base" id="latestDateDisplay">-</div>
         </div>
-        <div class="text-center sb-clickable" onclick="filterToday('正面')">
-          <div class="text-xs text-blue-300 mb-0.5">今日正面</div>
-          <div class="text-2xl font-bold text-green-300" id="hdrPos">-</div>
-          <div class="text-xs text-blue-300">則 ↗</div>
-        </div>
-        <div class="text-center sb-clickable" onclick="filterToday('負面')">
-          <div class="text-xs text-blue-300 mb-0.5">今日負面</div>
-          <div class="text-2xl font-bold text-red-300" id="hdrNeg">-</div>
-          <div class="text-xs text-blue-300">則 ↗</div>
+        <div class="text-center border-l border-blue-800 pl-4">
+          <div class="text-blue-300 text-xs mb-1">資料庫範圍</div>
+          <div class="text-white text-xs font-medium leading-tight" id="hdrDateRange">-</div>
+          <div class="text-blue-200 text-xs mt-0.5">共 <span class="text-yellow-300 font-bold text-lg" id="hdrTotal">-</span> 筆</div>
         </div>
         <div class="flex flex-col gap-1.5">
           <div class="ai-badge text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow"
@@ -545,10 +540,18 @@ function init() {
     document.getElementById('statTotal').textContent = todayPub.length;
     document.getElementById('statNeg').textContent   = todayNegC;
     document.getElementById('statPos').textContent   = todayPosC;
-    document.getElementById('hdrPos').textContent    = todayPosC;
-    document.getElementById('hdrNeg').textContent    = todayNegC;
     updateTrackKPI();
   }
+
+  // 資料庫範圍（header 顯示）
+  const firstDate = dates[0] || '';
+  const lastDate  = dates[dates.length-1] || '';
+  const el = document.getElementById('hdrDateRange');
+  if (el && firstDate && lastDate) {
+    el.innerHTML = toROC(firstDate) + '<br>至 ' + toROC(lastDate);
+  }
+  const elT = document.getElementById('hdrTotal');
+  if (elT) elT.textContent = (typeof TOTAL_ALL !== 'undefined' ? TOTAL_ALL : allItemsFlat.length).toLocaleString();
 
   allItemsFlat = [];
   const _seenIds = new Set();
