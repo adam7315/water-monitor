@@ -2,8 +2,8 @@ name: Daily Water Monitor
 
 on:
   schedule:
-    - cron: '0 23 * * *'   # UTC 23:00 = 台灣 07:00
-    - cron: '0 6 * * *'    # UTC 06:00 = 台灣 14:00
+    - cron: '0 22 * * *'   # UTC 22:00（提早1h）→ 延遲後約台灣 07:00
+    - cron: '0 3 * * *'    # UTC 03:00（提早3h）→ 延遲後約台灣 14:00
   workflow_dispatch:         # 允許手動觸發測試
 
 jobs:
@@ -34,6 +34,8 @@ jobs:
         run: python scripts/collect_news.py
 
       - name: Analyze sentiment
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scripts/analyze.py
 
       - name: Sync to Google Sheets
