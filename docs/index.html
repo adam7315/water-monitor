@@ -778,8 +778,7 @@ function archiveToForm(id) {
   // 先移除追蹤，再渲染，避免短暫閃爍
   const t=getTracked(); delete t[id]; saveTracked(t);
   renderClarifyList();
-  const dates = Object.keys(MONITOR_DATA).sort();
-  renderTodayNeg(dates[dates.length-1]||'');
+  renderTodayNeg(getLatestPubDate());
 }
 
 function untrack(id) {
