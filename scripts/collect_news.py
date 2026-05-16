@@ -284,6 +284,7 @@ DIRECT_RSS_FEEDS = [
 CSE_API_KEY      = os.environ.get("GOOGLE_CSE_API_KEY", "")
 CSE_ID           = os.environ.get("GOOGLE_CSE_ID", "964c6016fea3947d5")
 NEWSDATA_API_KEY = os.environ.get("NEWSDATA_API_KEY", "")
+YOUTUBE_API_KEY  = os.environ.get("YOUTUBE_API_KEY", "")
 TODAY            = datetime.now(_TW).date().isoformat()
 DATA_DIR         = os.path.join(os.path.dirname(__file__), "..", "data")
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -405,7 +406,7 @@ def fetch_ptt_rss(board: str) -> list:
     items = []
     try:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:10]:
+        for entry in feed.entries[:30]:
             if not is_recent(entry):
                 continue
             text = entry.get("title", "") + " " + entry.get("summary", "")
@@ -435,17 +436,21 @@ def fetch_ptt_rss(board: str) -> list:
         print(f"  PTT RSS 失敗 [{board}]: {e}")
     return items
 
-# ── 4. Dcard API（實驗性）─────────────────────────────────────
+# ── 4. Dcard API ──────────────────────────────────────────────
 def fetch_dcard() -> list:
-    """Dcard API 抓水資源相關討論"""
+    """Dcard API：抓各版水資源相關討論（使用正確的 /forums/{alias}/posts 端點）"""
     items = []
-    forums = ["water", "environment", "tainan", "kaohsiung", "taiwanpolitics"]
+    forums = [
+        "trending", "talk", "tainan", "kaohsiung", "taichung",
+        "environment", "PublicIssue", "HatePolitics",
+        "girl", "womentalk",
+    ]
     for forum in forums:
         try:
             r = requests.get(
-                "https://www.dcard.tw/service/api/v2/posts",
-                params={"forumAlias": forum, "limit": 30},
-                headers={"User-Agent": "Mozilla/5.0 (compatible; water-monitor/1.0)"},
+                f"https://www.dcard.tw/service/api/v2/forums/{forum}/posts",
+                params={"popular": "false", "limit": 30},
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
                 timeout=10
             )
             if r.status_code != 200:
@@ -466,22 +471,146 @@ def fetch_dcard() -> list:
                     continue
                 seen_hashes.add(uid)
                 created_at = post.get("createdAt", "")
+                pub_date = created_at[:10] if created_at else TODAY
                 items.append({
                     "id": uid,
                     "title": title,
                     "url": f"https://www.dcard.tw/f/{forum}/p/{post_id}",
                     "source": f"Dcard/{forum}",
                     "published": created_at,
-                    "pub_date": created_at[:10] if created_at else TODAY,
+                    "pub_date": pub_date,
+                    "date": pub_date,
                     "content": excerpt[:500],
                     "keyword": kw,
-                    "category": cat,
-                    "priority": PRIORITY.get(cat, 3),
+                    "category": "社群輿情",
+                    "priority": PRIORITY.get(cat, 2),
                     "platform": "Dcard",
                     "feed_source": "Dcard"
                 })
+            time.sleep(0.3)
         except Exception as e:
             print(f"  Dcard 失敗 [{forum}]: {e}")
+    return items
+
+# ── 4b. Instagram hashtag（instaloader，免費公開貼文）────────────
+def fetch_instagram_hashtags() -> list:
+    try:
+        import instaloader
+    except ImportError:
+        print("  instaloader 未安裝，跳過 Instagram")
+        return []
+
+    L = instaloader.Instaloader(
+        download_pictures=False, download_videos=False,
+        download_video_thumbnails=False, download_geotags=False,
+        download_comments=False, save_metadata=False, quiet=True,
+    )
+    hashtags = ["海水淡化廠", "台南缺水", "水情", "南水資源", "水庫蓄水", "台南水利", "限水"]
+    items = []
+    for tag in hashtags:
+        try:
+            ht = instaloader.Hashtag.from_name(L.context, tag)
+            count = 0
+            for post in ht.get_posts():
+                if count >= 5:
+                    break
+                pub = post.date_utc.replace(tzinfo=timezone.utc).astimezone(_TW).date()
+                if pub < CUTOFF_DATE:
+                    break
+                caption = (post.caption or "")
+                cat, kw = match_keywords(caption + " " + tag)
+                if not cat:
+                    cat, kw = "社群輿情", tag
+                link = f"https://www.instagram.com/p/{post.shortcode}/"
+                uid = dedup_id(post.shortcode, link)
+                if uid in seen_hashes:
+                    continue
+                seen_hashes.add(uid)
+                pub_str = pub.isoformat()
+                items.append({
+                    "id": uid,
+                    "title": caption[:80] or f"#{tag} Instagram 貼文",
+                    "url": link,
+                    "source": f"Instagram #{tag}",
+                    "published": pub_str,
+                    "pub_date": pub_str,
+                    "date": pub_str,
+                    "content": caption[:500],
+                    "keyword": kw,
+                    "category": "社群輿情",
+                    "priority": 1,
+                    "platform": "Instagram",
+                    "feed_source": "Instagram"
+                })
+                count += 1
+            time.sleep(2)
+        except Exception as e:
+            print(f"  Instagram #{tag} 失敗：{e}")
+    return items
+
+# ── 4c. YouTube Data API v3（需設定 YOUTUBE_API_KEY）────────────
+def fetch_youtube() -> list:
+    if not YOUTUBE_API_KEY:
+        return []
+    published_after = (datetime.now(timezone.utc) - timedelta(days=MAX_AGE_DAYS)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    yt_keywords = [
+        "海水淡化廠 台南", "南水資源分署", "台南缺水 水情",
+        "曾文水庫", "水情警戒", "海水淡化 台灣",
+    ]
+    items = []
+    for kw in yt_keywords:
+        try:
+            r = requests.get(
+                "https://www.googleapis.com/youtube/v3/search",
+                params={
+                    "key": YOUTUBE_API_KEY,
+                    "q": kw,
+                    "part": "snippet",
+                    "type": "video",
+                    "order": "date",
+                    "publishedAfter": published_after,
+                    "maxResults": 5,
+                    "relevanceLanguage": "zh-TW",
+                    "regionCode": "TW",
+                },
+                timeout=15
+            )
+            r.raise_for_status()
+            for it in r.json().get("items", []):
+                snippet = it.get("snippet", {})
+                vid_id  = it.get("id", {}).get("videoId", "")
+                if not vid_id:
+                    continue
+                link  = f"https://www.youtube.com/watch?v={vid_id}"
+                title = snippet.get("title", "")
+                pub   = snippet.get("publishedAt", "")[:10]
+                uid   = dedup_id(title, link)
+                if uid in seen_hashes:
+                    continue
+                seen_hashes.add(uid)
+                cat, matched_kw = match_keywords(
+                    title + " " + snippet.get("description", "")[:200]
+                )
+                if not cat:
+                    cat, matched_kw = "社群輿情", kw
+                items.append({
+                    "id": uid,
+                    "title": title,
+                    "url": link,
+                    "source": snippet.get("channelTitle", "YouTube"),
+                    "published": pub,
+                    "pub_date": pub,
+                    "date": pub,
+                    "content": snippet.get("description", "")[:500],
+                    "keyword": matched_kw,
+                    "category": "社群輿情",
+                    "priority": 2,
+                    "platform": "YouTube",
+                    "feed_source": "YouTube"
+                })
+            time.sleep(0.5)
+        except Exception as e:
+            print(f"  YouTube [{kw}] 失敗：{e}")
     return items
 
 # ── 5. Google CSE（FB / IG / Dcard）──────────────────────────
@@ -600,24 +729,40 @@ def main():
     all_items.extend(direct_items)
     print(f"  直接新聞源合計：{len(direct_items)} 則相關")
 
-    # 3. PTT
+    # 3. PTT（擴大板圖 + 每板 30 篇）
     print(f"\n[社群] PTT...")
     for board in ["WaterEngr", "Gossiping", "TW-News", "Environment", "Tainan",
-                  "kaohsiung", "Taichung", "publicissue"]:
+                  "kaohsiung", "Taichung", "publicissue", "HatePolitics", "NTU"]:
         items = fetch_ptt_rss(board)
-        print(f"  {board}: {len(items)} 則相關")
+        if items:
+            print(f"  {board}: {len(items)} 則相關")
         all_items.extend(items)
 
-    # 4. Dcard（實驗性）
+    # 4. Dcard（修正端點 + 更多版）
     print(f"\n[社群] Dcard...")
     dcard_items = fetch_dcard()
     print(f"  Dcard 合計：{len(dcard_items)} 則相關")
     all_items.extend(dcard_items)
 
-    # 5. Google CSE（FB/IG/Dcard）
+    # 4b. Instagram hashtag（instaloader，免費公開貼文）
+    print(f"\n[社群] Instagram hashtag...")
+    ig_items = fetch_instagram_hashtags()
+    print(f"  Instagram 合計：{len(ig_items)} 則相關")
+    all_items.extend(ig_items)
+
+    # 4c. YouTube（需設 YOUTUBE_API_KEY）
+    if YOUTUBE_API_KEY:
+        print(f"\n[社群] YouTube...")
+        yt_items = fetch_youtube()
+        print(f"  YouTube 合計：{len(yt_items)} 則相關")
+        all_items.extend(yt_items)
+    else:
+        print("\n[社群] 跳過 YouTube（未設 YOUTUBE_API_KEY）")
+
+    # 5. Google CSE（FB 公開粉專 + Dcard + PTT）
     if CSE_API_KEY:
         print(f"\n[社群] Google CSE (FB/IG/Dcard)...")
-        social_sites = ["facebook.com", "instagram.com", "dcard.tw"]
+        social_sites = ["facebook.com", "instagram.com", "dcard.tw", "ptt.cc"]
         for kw in ["海水淡化廠", "南水資源", "台南缺水", "水庫蓄水"]:
             items = fetch_cse(kw, "社群輿情", 1, social_sites)
             print(f"  {kw}: {len(items)} 則")

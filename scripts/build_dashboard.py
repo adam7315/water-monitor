@@ -473,7 +473,7 @@ let filteredItems = [];
 let currentPage = 1;
 const PAGE_SIZE = 30;
 
-const SOCIAL_PLAT_SET = new Set(['PTT','Dcard','Facebook','FB','Instagram','社群']);
+const SOCIAL_PLAT_SET = new Set(['PTT','Dcard','Facebook','FB','Instagram','Instagram','YouTube','社群']);
 const CAT_GROUPS = {
   '台南海水淡化廠': {cats:['海淡廠'],           icon:'🏭', color:'#065f46', grad:'linear-gradient(135deg,#064e3b,#059669)'},
   '南水資源分署':   {cats:['南部水資源'],        icon:'💧', color:'#1e5799', grad:'linear-gradient(135deg,#1a3a6c,#2d6a9f)'},
