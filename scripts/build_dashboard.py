@@ -473,11 +473,13 @@ let filteredItems = [];
 let currentPage = 1;
 const PAGE_SIZE = 30;
 
+const SOCIAL_PLAT_SET = new Set(['PTT','Dcard','Facebook','FB','Instagram','社群']);
 const CAT_GROUPS = {
-  '台南海水淡化廠': {cats:['海淡廠'],                icon:'🏭', color:'#065f46', grad:'linear-gradient(135deg,#064e3b,#059669)'},
-  '南水資源分署':   {cats:['南部水資源','社群輿情'], icon:'💧', color:'#1e5799', grad:'linear-gradient(135deg,#1a3a6c,#2d6a9f)'},
-  '水庫相關新聞':   {cats:['全台水資源'],             icon:'🏔', color:'#92400e', grad:'linear-gradient(135deg,#78350f,#d97706)'},
-  '國際水資源新聞': {cats:['國際'],                   icon:'🌍', color:'#4c1d95', grad:'linear-gradient(135deg,#3b0764,#7c3aed)'}
+  '台南海水淡化廠': {cats:['海淡廠'],           icon:'🏭', color:'#065f46', grad:'linear-gradient(135deg,#064e3b,#059669)'},
+  '南水資源分署':   {cats:['南部水資源'],        icon:'💧', color:'#1e5799', grad:'linear-gradient(135deg,#1a3a6c,#2d6a9f)'},
+  '水庫相關新聞':   {cats:['全台水資源'],        icon:'🏔', color:'#92400e', grad:'linear-gradient(135deg,#78350f,#d97706)'},
+  '國際水資源新聞': {cats:['國際'],              icon:'🌍', color:'#4c1d95', grad:'linear-gradient(135deg,#3b0764,#7c3aed)'},
+  '社群媒體':       {cats:['社群輿情'],          icon:'💬', color:'#0369a1', grad:'linear-gradient(135deg,#0c4a6e,#0284c7)', social:true},
 };
 let activeCatGroup = null;
 let highPriorityOnly = false;
@@ -732,9 +734,13 @@ function renderCatCircles() {
   const to   = document.getElementById('dateTo')?.value||'';
   const counts = {};
   Object.keys(CAT_GROUPS).forEach(g=>{
-    const cats = CAT_GROUPS[g].cats;
+    const cfg  = CAT_GROUPS[g];
+    const cats = cfg.cats;
     counts[g] = allItemsFlat.filter(x=>{
-      if (!cats.includes(x.category||'')) return false;
+      const match = cfg.social
+        ? (cats.includes(x.category||'') || SOCIAL_PLAT_SET.has(x.platform||''))
+        : cats.includes(x.category||'');
+      if (!match) return false;
       const nd = normalizeDate(x.pub_date||x.published||x.date||'');
       if (from && nd < from) return false;
       if (to   && nd > to)   return false;
@@ -988,8 +994,13 @@ function applyFilters() {
   let f = [...allItemsFlat];
 
   if (activeCatGroup) {
-    const cats = CAT_GROUPS[activeCatGroup].cats;
-    f = f.filter(x=>cats.includes(x.category||''));
+    const cfg  = CAT_GROUPS[activeCatGroup];
+    const cats = cfg.cats;
+    if (cfg.social) {
+      f = f.filter(x=>cats.includes(x.category||'') || SOCIAL_PLAT_SET.has(x.platform||''));
+    } else {
+      f = f.filter(x=>cats.includes(x.category||''));
+    }
   }
 
   if (sent) f = f.filter(x=>getSentiment(x)===sent);
