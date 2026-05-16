@@ -1,6 +1,6 @@
 /**
  * 水資源輿情監控系統 — Google Apps Script
- * v18: 修正 Date 物件序列化為 UTC 字串導致前端日期偏移問題；新增 sortByDate 動作
+ * v20: sortByDate 支援 published/date/日期；fixPublished 統一 published 為台灣時區日期
  */
 
 // ─────────────────────────────────────────────────────────
@@ -246,8 +246,11 @@ function doGet(e) {
 
       const lastCol    = sheet.getLastColumn();
       const rawHeaders = sheet.getRange(1,1,1,lastCol).getValues()[0].map(h=>String(h).trim());
-      const dateColIdx = rawHeaders.indexOf('日期') >= 0 ? rawHeaders.indexOf('日期') : rawHeaders.indexOf('date');  // 支援中英文欄位名
-      if (dateColIdx < 0) return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到「日期」欄位'})).setMimeType(ContentService.MimeType.JSON);
+      // 依優先順序尋找日期欄位：published → date → 日期
+      const dateColIdx = rawHeaders.indexOf('published') >= 0 ? rawHeaders.indexOf('published') :
+                         rawHeaders.indexOf('date') >= 0 ? rawHeaders.indexOf('date') :
+                         rawHeaders.indexOf('日期');
+      if (dateColIdx < 0) return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到日期欄位（查找 published/date/日期）', headers:rawHeaders})).setMimeType(ContentService.MimeType.JSON);
 
       // 先將所有日期欄位清洗為純 YYYY-MM-DD 字串，再排序
       const allValues = sheet.getRange(2,1,lastRow-1,lastCol).getValues();
@@ -265,6 +268,40 @@ function doGet(e) {
       sheet.getRange(2,1,cleaned.length,lastCol).setValues(cleaned);
 
       return ContentService.createTextOutput(JSON.stringify({status:'ok', sorted:cleaned.length})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'fixPublished') {
+      // 將 published 欄位更新為 pub_date 的台灣時區日期（兩欄不一致時）
+      const ss    = SpreadsheetApp.openById('1rZ9C78bMJsU8JLCwxfmWE4X_snXXRaBFo-8sfCEqST0');
+      const sheet = ss.getSheetByName('輿情資料') || ss.getSheets()[0];
+      const lastRow = sheet.getLastRow();
+      if (lastRow < 2) return ContentService.createTextOutput(JSON.stringify({status:'ok', updated:0})).setMimeType(ContentService.MimeType.JSON);
+
+      const lastCol      = sheet.getLastColumn();
+      const rawHeaders   = sheet.getRange(1,1,1,lastCol).getValues()[0].map(h=>String(h).trim());
+      const publishedIdx = rawHeaders.indexOf('published');  // 0-indexed
+      const pubDateIdx   = rawHeaders.indexOf('pub_date');
+
+      if (publishedIdx < 0 || pubDateIdx < 0) {
+        return ContentService.createTextOutput(JSON.stringify({status:'error', message:'找不到 published 或 pub_date 欄位'})).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      const allValues = sheet.getRange(2,1,lastRow-1,lastCol).getValues();
+      let updated = 0;
+
+      const newValues = allValues.map(row => {
+        const newRow    = row.slice();
+        const pubDate   = normalizeDate_(row[pubDateIdx]);    // 台灣時區日期
+        const published = normalizeDate_(row[publishedIdx]);  // 可能是 UTC 日期
+        if (pubDate && pubDate !== published) {
+          newRow[publishedIdx] = pubDate;
+          updated++;
+        }
+        return newRow;
+      });
+
+      sheet.getRange(2,1,newValues.length,lastCol).setValues(newValues);
+      return ContentService.createTextOutput(JSON.stringify({status:'ok', updated})).setMimeType(ContentService.MimeType.JSON);
     }
 
     if (action === 'headers') {

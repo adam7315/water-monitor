@@ -41,22 +41,25 @@ def main():
     if not items:
         print("無資料可同步"); return
 
-    # 確保日期欄位是純 YYYY-MM-DD 字串
+    # 確保日期欄位是純 YYYY-MM-DD 字串（台灣時區）
     import email.utils, re
+    from zoneinfo import ZoneInfo
+    TW = ZoneInfo('Asia/Taipei')
     def to_ymd(s):
         if not s:
             return ""
         s = str(s).strip()
-        if re.match(r'^\d{4}-\d{2}-\d{2}', s):
-            return s[:10]
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', s):
+            return s  # 已是純日期，直接回傳
         try:
-            return email.utils.parsedate_to_datetime(s).strftime('%Y-%m-%d')
+            # RFC 822 格式（含時區）→ 轉台灣時區
+            return email.utils.parsedate_to_datetime(s).astimezone(TW).strftime('%Y-%m-%d')
         except Exception:
             pass
         try:
-            from datetime import datetime, timezone
+            from datetime import datetime
             d = datetime.fromisoformat(s.replace('Z', '+00:00'))
-            return d.strftime('%Y-%m-%d')
+            return d.astimezone(TW).strftime('%Y-%m-%d')
         except Exception:
             pass
         return s[:10] if len(s) >= 10 else s
