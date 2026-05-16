@@ -91,9 +91,11 @@ def main():
         total_all       = sum(d.get("stats", {}).get("total", 0) for d in all_data.values())
         total_neg_all   = sum(d.get("stats", {}).get("negative", 0) for d in all_data.values())
 
+    last_updated = datetime.now(ZoneInfo('Asia/Taipei')).strftime('%Y-%m-%d %H:%M')
     data_js = (
         f"const MONITOR_DATA = {json.dumps(all_data, ensure_ascii=False)};\n"
         f"const TODAY = '{TODAY}';\n"
+        f"const LAST_UPDATED = '{last_updated}';\n"
         f"const TOPIC_HEAT = {json.dumps(topic_heat, ensure_ascii=False)};\n"
         f"const KEYWORD_RANKING = {json.dumps(keyword_ranking, ensure_ascii=False)};\n"
         f"const TOTAL_ALL = {total_all};\n"
@@ -197,6 +199,7 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <div class="text-center">
           <div class="text-blue-300 text-xs mb-0.5">最新資料</div>
           <div class="text-white font-bold text-base" id="latestDateDisplay">-</div>
+          <div class="text-blue-400 text-xs mt-0.5" id="lastUpdatedDisplay"></div>
         </div>
         <div class="text-center border-l border-blue-800 pl-4">
           <div class="text-blue-300 text-xs mb-1">資料庫範圍</div>
@@ -556,6 +559,8 @@ function init() {
 
   document.getElementById('latestDateDisplay').textContent = latest;
   document.getElementById('statsDateLabel').textContent   = latest;
+  const luEl = document.getElementById('lastUpdatedDisplay');
+  if (luEl && typeof LAST_UPDATED !== 'undefined') luEl.textContent = LAST_UPDATED + ' 蒐集';
 
   // ③ 今日 KPI — 用 pub_date 篩選，不依賴 MONITOR_DATA key
   const todayItems = allItemsFlat.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);

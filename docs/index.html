@@ -87,6 +87,7 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <div class="text-center">
           <div class="text-blue-300 text-xs mb-0.5">最新資料</div>
           <div class="text-white font-bold text-base" id="latestDateDisplay">-</div>
+          <div class="text-blue-400 text-xs mt-0.5" id="lastUpdatedDisplay"></div>
         </div>
         <div class="text-center border-l border-blue-800 pl-4">
           <div class="text-blue-300 text-xs mb-1">資料庫範圍</div>
@@ -446,6 +447,8 @@ function init() {
 
   document.getElementById('latestDateDisplay').textContent = latest;
   document.getElementById('statsDateLabel').textContent   = latest;
+  const luEl = document.getElementById('lastUpdatedDisplay');
+  if (luEl && typeof LAST_UPDATED !== 'undefined') luEl.textContent = LAST_UPDATED + ' 蒐集';
 
   // ③ 今日 KPI — 用 pub_date 篩選，不依賴 MONITOR_DATA key
   const todayItems = allItemsFlat.filter(x=>normalizeDate(x.pub_date||x.published||x.date||'')===latest);
