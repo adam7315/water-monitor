@@ -91,7 +91,15 @@ def _scrape_pub_date(url: str) -> str:
         if not m:
             m = re.search(r'content=["\']([0-9T:Z+\-.]{10,})["\'][^>]+property=["\']article:published_time["\']', html)
         if m:
-            return m.group(1)[:10]
+            date_str = m.group(1)[:10]
+            # 民國年轉西元（例如 115-05-17 → 2026-05-17）
+            try:
+                parts = date_str.split('-')
+                if len(parts) == 3 and len(parts[0]) < 4:
+                    date_str = str(int(parts[0]) + 1911) + '-' + parts[1] + '-' + parts[2]
+            except (ValueError, IndexError):
+                pass
+            return date_str
         # JSON-LD datePublished
         m = re.search(r'"datePublished"\s*:\s*"(\d{4}-\d{2}-\d{2})', html)
         if m:
