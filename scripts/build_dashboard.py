@@ -197,7 +197,7 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
         <div>
           <div class="text-blue-300 text-xs tracking-widest mb-0.5">114–115年度 臺南海水淡化廠暨南區水資源推廣計畫</div>
           <h1 class="text-xl font-extrabold tracking-tight">輿情監控系統</h1>
-          <div class="text-blue-400 text-xs mt-0.5">🕐 每日 07:00 &amp; 14:00 自動蒐集分析（台灣時間）</div>
+          <div class="text-blue-400 text-xs mt-0.5">🕐 每日 06:00 &amp; 14:00 自動蒐集分析（台灣時間）</div>
         </div>
       </div>
       <div class="flex items-center gap-4 shrink-0 flex-wrap">
@@ -436,7 +436,7 @@ body { font-family:-apple-system,"Noto Sans TC",sans-serif; background:#eef2f7; 
 <footer class="border-t border-slate-200 bg-white py-3 mt-2">
   <div class="max-w-7xl mx-auto px-5 text-center text-xs text-slate-400 space-x-2">
     <span>114-115年度 臺南海水淡化廠暨南區水資源推廣計畫</span>
-    <span>·</span><span>每日 07:00 &amp; 14:00（台灣時間）自動蒐集分析</span>
+    <span>·</span><span>每日 06:00 &amp; 14:00（台灣時間）自動蒐集分析</span>
     <span>·</span><span>Powered by Google Gemini AI &amp; GitHub Actions</span>
   </div>
 </footer>
