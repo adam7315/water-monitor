@@ -97,19 +97,48 @@ def main():
             last_updated = _f.read().strip()
     else:
         last_updated = datetime.now(ZoneInfo('Asia/Taipei')).strftime('%Y-%m-%d %H:%M')
+    # 2026-09-21 瘦身：原本 data.js 18MB（content 佔 42%、只顯示前 80 字），網路差時下載不完、整頁空白。
+    #   data.js     ＝近 RECENT_DAYS 天（預設畫面只看近 30 天）＋全庫統計
+    #   data_all.js ＝全部歷史，只有使用者把日期往前拉才在背景載入
+    RECENT_DAYS = 45
+    def _slim(day):
+        out = dict(day)
+        out["items"] = [
+            {k: (v[:120] if k == "content" and isinstance(v, str) else v)
+             for k, v in it.items() if v not in ("", None, [], {})}
+            for it in day.get("items", [])
+        ]
+        return out
+    slim_all = {k: _slim(v) for k, v in all_data.items()}
+    day_keys = sorted(slim_all)
+    recent_keys = day_keys[-RECENT_DAYS:]
+    recent = {k: slim_all[k] for k in recent_keys}
+    def _min_pub(md):
+        m = ""
+        for d in md.values():
+            for it in d.get("items", []):
+                pd = str(it.get("pub_date") or it.get("published") or it.get("date") or "")[:10]
+                if pd and (not m or pd < m): m = pd
+        return m
+    _dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(",", ":"))
     data_js = (
-        f"const MONITOR_DATA = {json.dumps(all_data, ensure_ascii=False)};\n"
-        f"const TODAY = '{TODAY}';\n"
-        f"const LAST_UPDATED = '{last_updated}';\n"
-        f"const TOPIC_HEAT = {json.dumps(topic_heat, ensure_ascii=False)};\n"
-        f"const KEYWORD_RANKING = {json.dumps(keyword_ranking, ensure_ascii=False)};\n"
+        f"let MONITOR_DATA = {_dump(recent)};\n"
+        f"const DATA_FROM = {_dump(recent_keys[0] if recent_keys else '')};\n"      # data.js 只涵蓋到這一天（蒐集日）
+        f"const DATA_EARLIEST = {_dump(_min_pub(slim_all))};\n"                     # 全庫最早的發布日（表頭用）
+        f"const TODAY = {_dump(TODAY)};\n"
+        f"const LAST_UPDATED = {_dump(last_updated)};\n"
+        f"const TOPIC_HEAT = {_dump(topic_heat)};\n"
+        f"const KEYWORD_RANKING = {_dump(keyword_ranking)};\n"
         f"const TOTAL_ALL = {total_all};\n"
         f"const TOTAL_NEG_ALL = {total_neg_all};\n"
-        f"const SHEETS_API_URL = '{SHEETS_API_URL}';\n"
+        f"const SHEETS_API_URL = {_dump(SHEETS_API_URL)};\n"
     )
     with open(os.path.join(DOCS_DIR, "data.js"), "w", encoding="utf-8") as f:
         f.write(data_js)
-
+    with open(os.path.join(DOCS_DIR, "data_all.js"), "w", encoding="utf-8") as f:
+        f.write(f"const MONITOR_DATA_ALL = {_dump(slim_all)};\n")
+    print(f"data.js 近 {len(recent)} 天 {os.path.getsize(os.path.join(DOCS_DIR,'data.js'))//1024} KB；"
+          f"data_all.js {len(slim_all)} 天 {os.path.getsize(os.path.join(DOCS_DIR,'data_all.js'))//1024} KB")
     print(f"data.js 已產生（{len(all_data)} 天、共 {total_all} 則、負面 {total_neg_all} 則）")
     build_html()
     print("index.html 已產生")
@@ -541,6 +570,7 @@ function getLatestPubDate() {
   return d;
 }
 function getMinPubDate() {
+  if (!_allLoaded && typeof DATA_EARLIEST !== 'undefined' && DATA_EARLIEST) return DATA_EARLIEST;
   let d = '';
   allItemsFlat.forEach(x=>{ const p=normalizeDate(x.pub_date||x.published||x.date||''); if(p&&(!d||p<d)) d=p; });
   return d;
@@ -549,8 +579,7 @@ function getMinPubDate() {
 /* ══════════════════════════════════════════
    初始化
 ══════════════════════════════════════════ */
-function init() {
-  // ① 先建立 allItemsFlat（後面所有日期邏輯都以 pub_date 為準）
+function rebuildFlat() {
   allItemsFlat = [];
   const _seenIds = new Set();
   Object.values(MONITOR_DATA).forEach(d=>{
@@ -559,6 +588,28 @@ function init() {
       if (!_seenIds.has(_id)) { _seenIds.add(_id); allItemsFlat.push(item); }
     });
   });
+}
+
+/* 2026-09-21 完整歷史延遲載入：data.js 只帶近 45 天；日期往前拉超過 DATA_FROM 才抓 data_all.js */
+let _allLoaded = (typeof DATA_FROM === 'undefined'), _allLoading = false;
+function needAllData(from) {
+  return !_allLoaded && !!from && typeof DATA_FROM !== 'undefined' && from < DATA_FROM;
+}
+function loadAllData(then) {
+  if (_allLoaded) { then && then(); return; }
+  const pi = document.getElementById('pageInfo'); if (pi) pi.textContent = '載入完整歷史資料中…';
+  if (_allLoading) return;
+  _allLoading = true;
+  const sc = document.createElement('script');
+  sc.src = 'data_all.js?v=' + (typeof LAST_UPDATED !== 'undefined' ? encodeURIComponent(LAST_UPDATED) : '');
+  sc.onload = () => { MONITOR_DATA = MONITOR_DATA_ALL; _allLoaded = true; _allLoading = false; rebuildFlat(); then && then(); };
+  sc.onerror = () => { _allLoading = false; if (pi) pi.textContent = '完整歷史載入失敗，請重新整理'; };
+  document.head.appendChild(sc);
+}
+
+function init() {
+  // ① 先建立 allItemsFlat（後面所有日期邏輯都以 pub_date 為準）
+  rebuildFlat();
 
   // ② 最新/最舊 pub_date（唯一日期依據）
   const latest   = getLatestPubDate();
@@ -990,6 +1041,7 @@ function applyFilters() {
   const to     = document.getElementById('dateTo').value;
   const plat   = document.getElementById('platFilter')?.value||'';
   const tracked = getTracked();
+  if (needAllData(from)) { loadAllData(applyFilters); return; }
 
   let f = [...allItemsFlat];
 
@@ -1223,8 +1275,8 @@ async function loadFromSheets() {
     if (data.error || !data.monitor_data) throw new Error(data.error || 'no monitor_data');
     // Sheets 回傳空資料時，保留 data.js 的本地資料，不覆蓋
     if (Object.keys(data.monitor_data).length === 0) throw new Error('Sheets monitor_data 為空，使用本地資料');
+    MONITOR_DATA = data.monitor_data;   // 頂層 let，直接指定（Object.assign(window) 蓋不到 let/const）
     if (typeof MONITOR_DATA !== 'undefined') Object.assign(window, {
-      MONITOR_DATA:    data.monitor_data,
       TODAY:           data.today           || TODAY,
       TOPIC_HEAT:      data.topic_heat      || TOPIC_HEAT,
       KEYWORD_RANKING: data.keyword_ranking || KEYWORD_RANKING,
@@ -1241,15 +1293,17 @@ async function loadFromSheets() {
 
 // 2026-09-21：先用 data.js 立刻畫出來（原本要等 Sheets 回 18MB、約 20 秒，畫面一直是「-」像沒更新）；
 // Sheets 在背景抓，抓到「更新」的資料才重畫一次。
+const LIVE_SHEETS = false;   // 2026-09-21 關掉：data.js 本來就是同一份 Sheets 資料，每次開頁再抓 18MB 只會拖慢、網路差時還抓不完
 function _countItems(md){ return Object.values(md||{}).reduce((n,d)=>n+((d.items||[]).length),0); }
 function _latestOf(md){ let m=''; Object.values(md||{}).forEach(d=>(d.items||[]).forEach(x=>{const p=normalizeDate(x.pub_date||x.published||x.date||''); if(p>m) m=p;})); return m; }
 window.addEventListener('DOMContentLoaded', async () => {
   init();
-  const localN = _countItems(MONITOR_DATA), localLatest = _latestOf(MONITOR_DATA);
+  if (!LIVE_SHEETS) return;
+  const localLatest = _latestOf(MONITOR_DATA);
   const ok = await loadFromSheets();
   if (!ok) return;
-  const sheetN = _countItems(MONITOR_DATA), sheetLatest = _latestOf(MONITOR_DATA);
-  if (sheetN > localN || sheetLatest > localLatest) { console.log('[Sheets] 資料較新，重畫'); init(); }
+  _allLoaded = true;   // Sheets 回的是全部歷史
+  if (_latestOf(MONITOR_DATA) > localLatest) { console.log('[Sheets] 資料較新，重畫'); init(); } else { rebuildFlat(); }
 });
 </script>
 </body>
