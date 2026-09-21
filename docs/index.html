@@ -1100,7 +1100,7 @@ const _SHEETS_GET_URL = typeof SHEETS_API_URL !== 'undefined' ? SHEETS_API_URL :
 async function loadFromSheets() {
   if (!_SHEETS_GET_URL) return false;
   try {
-    const resp = await fetch(_SHEETS_GET_URL + '?action=getAll', {redirect:'follow'});
+    const resp = await fetch(_SHEETS_GET_URL + '?action=getAll', {redirect:'follow', signal: AbortSignal.timeout(40000)});
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
     if (data.error || !data.monitor_data) throw new Error(data.error || 'no monitor_data');
@@ -1122,9 +1122,17 @@ async function loadFromSheets() {
   }
 }
 
+// 2026-09-21：先用 data.js 立刻畫出來（原本要等 Sheets 回 18MB、約 20 秒，畫面一直是「-」像沒更新）；
+// Sheets 在背景抓，抓到「更新」的資料才重畫一次。
+function _countItems(md){ return Object.values(md||{}).reduce((n,d)=>n+((d.items||[]).length),0); }
+function _latestOf(md){ let m=''; Object.values(md||{}).forEach(d=>(d.items||[]).forEach(x=>{const p=normalizeDate(x.pub_date||x.published||x.date||''); if(p>m) m=p;})); return m; }
 window.addEventListener('DOMContentLoaded', async () => {
-  await loadFromSheets();
   init();
+  const localN = _countItems(MONITOR_DATA), localLatest = _latestOf(MONITOR_DATA);
+  const ok = await loadFromSheets();
+  if (!ok) return;
+  const sheetN = _countItems(MONITOR_DATA), sheetLatest = _latestOf(MONITOR_DATA);
+  if (sheetN > localN || sheetLatest > localLatest) { console.log('[Sheets] 資料較新，重畫'); init(); }
 });
 </script>
 </body>
