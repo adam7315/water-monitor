@@ -49,6 +49,7 @@ jobs:
       - name: Sync to Google Sheets
         env:
           SHEETS_API_URL: ${{ secrets.SHEETS_API_URL }}
+          SHEETS_WRITE_KEY: ${{ secrets.SHEETS_WRITE_KEY }}
         run: python scripts/sync_to_sheets.py
 
       - name: Build dashboard

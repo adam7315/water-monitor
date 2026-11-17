@@ -76,9 +76,19 @@ function buildRow_(rawHeaders, item) {
 // ─────────────────────────────────────────────────────────
 //  GET
 // ─────────────────────────────────────────────────────────
+// ── 寫入通關密碼：Script Properties 設了 WRITE_KEY 才會檢查（沒設＝照舊放行，方便先部署再設定）──
+function _authOk_(k) {
+  const want = PropertiesService.getScriptProperties().getProperty('WRITE_KEY');
+  return !want || k === want;
+}
+function _denied_() {
+  return ContentService.createTextOutput(JSON.stringify({error:'unauthorized'})).setMimeType(ContentService.MimeType.JSON);
+}
+
 function doGet(e) {
   try {
     const action = e && e.parameter && e.parameter.action;
+    if (['fixDates','clarify','sortByDate','fixPublished'].indexOf(action) >= 0 && !_authOk_(e.parameter.key)) return _denied_();
 
     if (!action || action === 'status') {
       return ContentService
@@ -329,6 +339,7 @@ function _emptyResponse() {
 function doPost(e) {
   try {
     const payload = JSON.parse(e.postData.contents);
+    if (!_authOk_(payload.key)) return _denied_();
 
     // ── action=batchUpdateDates：批次更新「日期」欄位為實際發布日 ──
     if (payload.action === 'batchUpdateDates') {

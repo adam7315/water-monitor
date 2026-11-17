@@ -17,7 +17,7 @@ def sync_batch(items_batch: list, batch_num: int) -> dict:
     try:
         r = requests.post(
             SHEETS_API_URL,
-            json={"items": items_batch},
+            json={"items": items_batch, "key": os.environ.get("SHEETS_WRITE_KEY", "")},
             timeout=90
         )
         r.raise_for_status()
@@ -99,7 +99,7 @@ def main():
 
     # 每次寫入後自動排序（日期由新到舊），避免手動排序
     try:
-        r = requests.get(f"{SHEETS_API_URL}?action=sortByDate", timeout=60)
+        r = requests.get(SHEETS_API_URL, params={"action": "sortByDate", "key": os.environ.get("SHEETS_WRITE_KEY", "")}, timeout=60)
         res = r.json()
         print(f"排序完成：{res.get('sorted', '?')} 列")
     except Exception as e:
